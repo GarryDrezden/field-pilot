@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const contentPath = join('dist', 'content.js');
+const distDir = 'dist';
+const contentPath = join(distDir, 'content.js');
 const content = readFileSync(contentPath, 'utf8');
 
 if (/\bimport\.meta\b/.test(content)) {
@@ -11,6 +12,11 @@ if (/\bimport\.meta\b/.test(content)) {
 
 if (!content.includes('(function(){') && !content.includes('(function() {')) {
   console.error('Build verification failed: dist/content.js must be an IIFE bundle');
+  process.exit(1);
+}
+
+if (!existsSync(join(distDir, 'pdf.worker.min.mjs'))) {
+  console.error('Build verification failed: pdf.worker.min.mjs is missing from dist/');
   process.exit(1);
 }
 

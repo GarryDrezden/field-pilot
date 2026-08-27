@@ -1,7 +1,10 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import type { DocumentParseResult } from '../../shared/types/document';
+import { ensurePdfWorkerConfigured } from './setupPdfjs';
 
 export async function parsePdfFile(file: File): Promise<DocumentParseResult> {
+  ensurePdfWorkerConfigured();
+
   const arrayBuffer = await file.arrayBuffer();
   const warnings: string[] = [];
 
