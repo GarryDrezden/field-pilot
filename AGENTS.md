@@ -149,7 +149,7 @@ Load unpacked: папка **`dist/`**
 
 ### 2026-08-27 — v0.2 Profiles & Property Catalog
 
-**Коммит:** _(will be set after commit)_
+**Коммит:** `85fb1e2`
 
 - `src/profile/*` — типы, storage (`schemaVersion: 1`), import/export, matcher
 - `PageFieldSignature` — name, htmlId, normalizedLabel, elementType (не runtime fp-field id)
