@@ -1,6 +1,8 @@
 import type { ExtractionResult } from '../extraction/types';
+import type { MatchReviewDecision, DocumentMatchReviewState } from '../matching/types';
 import {
   DOCUMENT_SESSION_SCHEMA_VERSION,
+  DOCUMENT_SESSION_SCHEMA_VERSION_V1,
   DOCUMENT_SESSION_STORAGE_KEY,
   type DocumentSession,
   type DocumentSessionFileMeta,
@@ -14,6 +16,7 @@ export function buildDocumentSession(
   fileMeta: DocumentSessionFileMeta,
   extraction: ExtractionResult,
   textExtracted: boolean,
+  matchReview?: DocumentMatchReviewState,
 ): DocumentSession {
   return {
     schemaVersion: DOCUMENT_SESSION_SCHEMA_VERSION,
@@ -23,6 +26,7 @@ export function buildDocumentSession(
     extractionStats: extraction.stats,
     textExtracted,
     createdAt: new Date().toISOString(),
+    matchReview,
   };
 }
 
@@ -34,7 +38,10 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
   const session = raw as Partial<DocumentSession> & {
     file?: DocumentSessionFileMeta;
   };
-  if (session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION) {
+  if (
+    session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION &&
+    session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION_V1
+  ) {
     return null;
   }
 
@@ -50,6 +57,8 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
   if (!Array.isArray(session.characteristics)) {
     return null;
   }
+
+  const matchReview = parseMatchReview(session.matchReview);
 
   return {
     schemaVersion: DOCUMENT_SESSION_SCHEMA_VERSION,
@@ -69,7 +78,45 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
     },
     textExtracted: Boolean(session.textExtracted),
     createdAt: typeof session.createdAt === 'string' ? session.createdAt : new Date().toISOString(),
+    matchReview,
   };
+}
+
+function parseMatchReview(raw: unknown): DocumentSession['matchReview'] {
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+  const value = raw as { profileId?: string; decisions?: Record<string, unknown> };
+  if (!value.profileId || typeof value.profileId !== 'string') {
+    return undefined;
+  }
+  const decisions: NonNullable<DocumentSession['matchReview']>['decisions'] = {};
+  if (value.decisions && typeof value.decisions === 'object') {
+    for (const [characteristicId, decisionRaw] of Object.entries(value.decisions)) {
+      const parsed = parseReviewDecision(decisionRaw);
+      if (parsed) {
+        decisions[characteristicId] = parsed;
+      }
+    }
+  }
+  return { profileId: value.profileId, decisions };
+}
+
+function parseReviewDecision(raw: unknown): MatchReviewDecision | undefined {
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+  const decision = raw as { type?: string; propertyId?: string };
+  if (decision.type === 'ignored') {
+    return { type: 'ignored' };
+  }
+  if (
+    (decision.type === 'confirmed' || decision.type === 'manual') &&
+    typeof decision.propertyId === 'string'
+  ) {
+    return { type: decision.type, propertyId: decision.propertyId };
+  }
+  return undefined;
 }
 
 export function extractionFromSession(session: DocumentSession): ExtractionResult {

@@ -92,24 +92,26 @@ Document → ExtractedCharacteristic → ProfileProperty → (optional) PageFiel
 
 ---
 
-## v0.4 — Matching Engine (CURRENT)
+## v0.4 — Matching Engine ✅
 
 ```text
 ExtractedCharacteristic → ProfileProperty
-(then existing ProfileProperty → PageField mapping for fill)
 ```
 
-- [ ] `matchDocumentToProfile(characteristics, profile.properties)` — без PageField в решении
-- [ ] словарь синонимов, token matching (без LLM)
-- [ ] confidence score (🟢 / 🟡 / 🔴)
-- [ ] объяснение причины совпадения
-- [ ] защита от ложных совпадений
+- [x] `matchDocumentToProfile(characteristics, profile.properties)` — без PageField
+- [x] RU/EN technical lexicon + canonical concepts
+- [x] unit-aware scoring + hard conflicts (MAX/MIN, materials, axes)
+- [x] confidence heuristic 🟢 / 🟡 / 🔴 + candidate margin
+- [x] duplicate property name ambiguity
+- [x] manual review + session persistence
+- [x] target collision detection
+- [x] UI: primary matched list when profile selected
 
-**Результат:** end-to-end связка документ → профиль → поле (без fill).
+**Результат:** document ↔ profile matching работает на любой странице без form scan.
 
 ---
 
-## v0.5 — Review & Fill
+## v0.5 — Review & Fill (CURRENT)
 
 - [ ] экран проверки соответствий
 - [ ] заполнение input / textarea / select

@@ -4,6 +4,24 @@
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-08-27
+
+### Added
+
+- Local document → profile matcher (`matchDocumentToProfile`)
+- RU/EN technical lexicon + canonical label overlap scoring
+- Unit-aware matching via `inferPropertyUnit()` + `normalizeUnit()`
+- Confidence levels 🟢 / 🟡 / 🔴, alternatives, explainable reasons
+- Manual review: confirm / pick property / ignore
+- Session-persisted review decisions (DocumentSession schema v2)
+- Target collision detection
+- `getFillReadyMatches()` preparatory API for v0.5
+
+### Changed
+
+- When profile is selected, matched characteristics become the primary UI result
+- Raw characteristics list hidden when profile matching is active
+
 ## [0.3.1] — 2026-08-27
 
 ### Added
@@ -86,7 +104,8 @@
 - `scripts/verify-build.mjs` — проверка injectable content bundle
 - Permissions: `activeTab`, `scripting`, `storage` only
 
-[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/GarryDrezden/field-pilot/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.1.0...v0.2.0

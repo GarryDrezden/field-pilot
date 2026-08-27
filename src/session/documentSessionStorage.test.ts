@@ -129,6 +129,54 @@ describe('documentSessionStorage', () => {
     expect(deserializeDocumentSession('{not json')).toBeNull();
     expect(parseDocumentSession({ schemaVersion: 1, fileMeta: { name: 'x.pdf', type: 'txt' } })).toBeNull();
   });
+
+  it('restores matchReview decisions for schema v2', () => {
+    const withReview: DocumentSession = {
+      ...sampleSession,
+      schemaVersion: 2,
+      matchReview: {
+        profileId: 'profile-mosklad',
+        decisions: {
+          c1: { type: 'confirmed', propertyId: 'PARAM10' },
+          c2: { type: 'ignored' },
+        },
+      },
+    };
+    const restored = deserializeDocumentSession(serializeDocumentSession(withReview));
+    expect(restored?.matchReview?.profileId).toBe('profile-mosklad');
+    expect(restored?.matchReview?.decisions.c1).toEqual({ type: 'confirmed', propertyId: 'PARAM10' });
+    expect(restored?.matchReview?.decisions.c2).toEqual({ type: 'ignored' });
+  });
+
+  it('accepts legacy schema v1 without matchReview', () => {
+    const legacy = {
+      schemaVersion: 1,
+      fileMeta: { name: 'legacy.pdf', type: 'pdf' },
+      characteristics: sampleSession.characteristics,
+      createdAt: sampleSession.createdAt,
+    };
+    const restored = parseDocumentSession(legacy);
+    expect(restored?.matchReview).toBeUndefined();
+  });
+
+  it('drops invalid matchReview decisions safely', () => {
+    const corrupt = {
+      schemaVersion: 2,
+      fileMeta: { name: 'x.pdf', type: 'pdf' },
+      characteristics: sampleSession.characteristics,
+      createdAt: sampleSession.createdAt,
+      matchReview: {
+        profileId: 'p1',
+        decisions: {
+          c1: { type: 'manual' },
+          c2: { type: 'confirmed', propertyId: 'ok' },
+        },
+      },
+    };
+    const restored = parseDocumentSession(corrupt);
+    expect(restored?.matchReview?.decisions.c1).toBeUndefined();
+    expect(restored?.matchReview?.decisions.c2).toEqual({ type: 'confirmed', propertyId: 'ok' });
+  });
 });
 
 describe('documentSessionStorage adapter', () => {

@@ -56,6 +56,14 @@ FieldPilot автоматически распознаёт колонки:
 
 При повторном импорте того же каталога свойства сопоставляются по **`externalId`**, а не по названию — внутренние ID и mappings сохраняются. Одинаковые названия с разными `externalId` (например PARAM2226 и PARAM2248) остаются разными свойствами.
 
+### v0.4 — Document → Profile Matching
+
+- Локальный deterministic matcher (`matchDocumentToProfile`) без AI/LLM
+- RU/EN technical lexicon, unit compatibility, concept conflict groups
+- Confidence heuristic 🟢 / 🟡 / 🔴 (не статистическая вероятность)
+- Manual review + session-persisted decisions
+- Matching работает без scan текущей страницы
+
 ### v0.3.1 — Document Workspace / Session
 
 - **Document session** в `chrome.storage.session` — characteristics между навигациями
@@ -72,7 +80,6 @@ FieldPilot автоматически распознаёт колонки:
 - Нормализация единиц RU/EN (longest-match-first: `m/min` ≠ `m`)
 - UI: «Характеристики документа» — главный результат; исходный текст в свёрнутом debug-блоке
 - **Document session:** characteristics сохраняются в `chrome.storage.session` между навигациями
-- Placeholder для document → profile matching (v0.4)
 
 ## Pipeline
 
@@ -81,9 +88,9 @@ Document
    ↓
 ExtractedCharacteristic       ✅ v0.3
    ↓
-ProfileProperty               ⏳ v0.4 (matching)
+ProfileProperty matching      ✅ v0.4
    ↓
-PageField                     ✅ v0.2 (profile ↔ page)
+PageField (optional)          ✅ v0.2
    ↓
 Fill                          ⏳ v0.5
 ```
@@ -91,28 +98,25 @@ Fill                          ⏳ v0.5
 **Сейчас работают:**
 
 - document parsing (v0.1)
-- **document → extracted characteristics, page-independent** (v0.3)
+- document → extracted characteristics, page-independent (v0.3)
+- **document → profile matching with review** (v0.4)
 - profile property ↔ page field exact matching (v0.2)
-- document session persistence в browser session (v0.3)
+- document session persistence (v0.3.1)
 
-**Следующий шаг:** `matchDocumentToProfile(characteristics, profile.properties)` (v0.4).
+**Следующий шаг:** fill подтверждённых matches (v0.5).
 
 ## Что запланировано
 
-- Document → profile matching + confidence score (v0.4)
-- Document → profile → page matching engine + confidence score (v0.4)
 - Безопасное заполнение выбранных полей без auto-submit (v0.5)
-- Расширенное обучение на исправлениях пользователя (v0.6)
+- Persistent learning на явных user-confirmed mappings (v0.6)
 - ChatGPT Bridge без собственного API (v0.7)
 - OCR и сложные документы (v0.8)
 
 Подробный план — в [ROADMAP.md](ROADMAP.md).
 
-## Confidence Score (запланировано)
+## Confidence Score
 
-FieldPilot не должен делать вид, что уверен там, где соответствие неоднозначно.
-
-Для каждого сопоставления планируется уровень уверенности:
+FieldPilot использует **локальную heuristic confidence** (0–100%), а не статистическую вероятность модели.
 
 - 🟢 **высокая уверенность** — совпадение можно предложить для заполнения
 - 🟡 **требует проверки** — соответствие вероятно, но неоднозначно

@@ -12,6 +12,7 @@ import { ProfileManagePanel } from './components/ProfileManagePanel';
 import { ProfilePropertiesPanel } from './components/ProfilePropertiesPanel';
 import { ProfileImportPanel } from './components/ProfileImportPanel';
 import { useDocument } from './hooks/useDocument';
+import { useProfiles } from './hooks/useProfiles';
 
 interface AppProps {
   onClose: () => void;
@@ -19,11 +20,15 @@ interface AppProps {
 
 function MainScreen() {
   const { extraction } = useDocument();
+  const { activeProfile } = useProfiles();
+  const showRawCharacteristics = Boolean(extraction && !activeProfile);
 
   return (
     <>
       <DocumentSection />
-      {extraction && <DocumentCharacteristicsSection extraction={extraction} />}
+      {showRawCharacteristics && extraction && (
+        <DocumentCharacteristicsSection extraction={extraction} />
+      )}
       <ProfileMatchingSection />
       <PageFieldsSection />
       <DocumentDebugSection />

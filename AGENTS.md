@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.3.1 (Document Workspace / Session)  
-**Milestone:** page-independent document analysis; session persistence между навигациями.
+**Версия:** v0.4.0 (Document → Profile Matching)  
+**Milestone:** локальное сопоставление ExtractedCharacteristic ↔ ProfileProperty с confidence и manual review.
 
 ### Что уже работает
 
@@ -23,13 +23,14 @@
 - **Reimport по externalId** — mappings сохраняются при обновлении каталога
 - **Exact matching profile ↔ page:** saved mapping, exact label, exact alias
 - **PageFieldSignature** для восстановления связей на новой странице
-- UI: документ → характеристики → placeholder profile matching → текущая страница (scan)
-- Unit-тесты: extraction, session, scanner, profile import/matcher
+- UI: документ → **сопоставление с профилем** (🟢🟡🔴) → текущая страница (scan)
+- **Document → Profile matching:** RU/EN lexicon, unit-aware scoring, manual review
+- Unit-тесты: extraction, session, matching, scanner, profile import/matcher
 
 ### Что НЕ реализовано (не начинать без запроса)
 
-- Document → profile matching (v0.4)
 - Заполнение полей (v0.5)
+- Persistent learning / auto aliases (v0.6)
 - Fuzzy / AI / OCR / ChatGPT Bridge
 - Bitrix-specific / site-specific код
 
@@ -67,7 +68,7 @@ src/
   document/         PDF/DOCX parsers → DocumentParseResult
   extraction/       characteristic extraction from documents
   session/          document session (chrome.storage.session)
-  matching/         v0.4 stubs (matchDocumentToProfile)
+  matching/         matchDocumentToProfile, review, collisions
   form/             formScanner, labelResolver
   profile/          storage, import, export, matcher, fieldSignature
   shared/           types, utils
@@ -93,7 +94,9 @@ src/
 | `src/extraction/extractCharacteristics.ts` | Document → ExtractedCharacteristic |
 | `src/session/documentSessionStorage.ts` | Document session в chrome.storage.session |
 | `src/ui/context/DocumentContext.tsx` | React state документа + session restore |
-| `src/matching/documentProfileMatcher.ts` | Stub matchDocumentToProfile (v0.4) |
+| `src/matching/matchDocumentToProfile.ts` | Document ↔ Profile matcher |
+| `src/matching/canonicalizeLabel.ts` | RU/EN technical lexicon |
+| `src/matching/applyReviewDecisions.ts` | Session review + fill-ready selector |
 | `src/profile/profileXlsxImport.ts` | XLSX parse (SheetJS) |
 | `src/profile/profileImport.ts` | Column mapping, catalog merge by externalId |
 | `src/profile/profileStorage.ts` | chrome.storage.local, CRUD профилей |
@@ -128,7 +131,7 @@ Load unpacked: папка **`dist/`**
 - PDF без text layer → предупреждение, OCR позже
 - checkbox/radio не сканируются
 - `content.js` ~1.47 MB (pdfjs + mammoth + React + xlsx + extraction)
-- Document → profile matching не реализован (v0.4)
+- Fill полей не реализован (v0.5)
 - Без `storage.session` document session не переживает navigation (graceful fallback)
 - fullText документа не сохраняется в session — только source.text у каждой characteristic
 - Только exact matching (без fuzzy)
@@ -215,6 +218,14 @@ Load unpacked: папка **`dist/`**
 - Conservative prose rejection; structured lines с `Max.` abbreviations
 - HARSLE PB-2000 PDF acceptance: 29 candidates, key technical params found
 - Tests: 55 total (+27); bundle ~1473 KB (+~14 KB vs v0.2.0)
+
+### 2026-08-27 — v0.4.0 Document → Profile Matching
+
+- `src/matching/*` — deterministic bilingual matcher, unit-aware scoring, conflicts
+- UI: сопоставление с профилем, manual review, property picker
+- DocumentSession v2: review decisions в `chrome.storage.session`
+- Tests: canonicalization, matcher safety, review decisions, HARSLE matching (+27)
+- Bundle: `content.js` ~1506 KB (+~27 KB vs v0.3.1)
 
 ### 2026-08-27 — v0.3.1 Document Workspace / Session
 

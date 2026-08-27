@@ -1,0 +1,49 @@
+export const MATCH_HIGH_THRESHOLD = 0.9;
+export const MATCH_REVIEW_THRESHOLD = 0.65;
+export const MATCH_HIGH_MARGIN = 0.08;
+
+export const EXACT_NAME_SCORE = 1;
+export const EXACT_ALIAS_SCORE = 0.98;
+
+export const UNIT_MATCH_BONUS = 0.12;
+export const UNKNOWN_TOKEN_BONUS = 0.08;
+
+export const POWER_SUBTYPE_REVIEW_CAP = 0.82;
+export const POWER_SUBTYPE_REJECT_CAP = 0.58;
+
+export const MAX_ALTERNATIVES = 5;
+
+export const CONCEPT_WEIGHTS: Record<string, number> = {
+  MOTOR: 1,
+  CONSUMPTION: 1,
+  POWER: 0.35,
+  WEIGHT: 1,
+  LENGTH: 0.5,
+  WIDTH: 0.5,
+  HEIGHT: 0.5,
+  MAX: 0.7,
+  MIN: 0.7,
+  AVERAGE: 0.7,
+  WORKING: 0.7,
+  FEED: 1,
+  BEND: 1,
+  SPEED: 0.4,
+  ANGLE: 0.8,
+  THICKNESS: 0.9,
+  STAINLESS: 1,
+  ALUMINUM: 1,
+  MILD_STEEL: 1,
+  MATERIAL: 0.4,
+  DIMENSION: 0.5,
+  STRUCTURE: 0.6,
+  SYSTEM: 0.4,
+  CONTROL: 0.5,
+  SERVO: 0.9,
+  BEARING: 0.9,
+  LINEAR_GUIDE: 1,
+  BALL_SCREW: 1,
+  REDUCER: 0.9,
+  ACCURACY: 0.8,
+};
+
+export const DEFAULT_CONCEPT_WEIGHT = 0.55;

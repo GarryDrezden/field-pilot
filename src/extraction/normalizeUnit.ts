@@ -73,7 +73,7 @@ export function findUnitInText(text: string): { rawUnit: string; normalizedUnit?
       };
     }
 
-    const suffixRegex = new RegExp(`\\s(${escapeRegex(entry.pattern)})$`, 'i');
+    const suffixRegex = new RegExp(`[,\\s]+(${escapeRegex(entry.pattern)})$`, 'i');
     const suffixMatch = trimmed.match(suffixRegex);
     if (suffixMatch?.index !== undefined && suffixMatch[1]) {
       return {
