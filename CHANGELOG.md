@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.9.2] — 2026-08-27
+
+### Fixed
+
+- Profile matching alternatives: show `ProfileProperty.name` and `externalId` instead of internal UUIDs; stale missing properties filtered from list
+
 ## [0.9.1] — 2026-08-27
 
 ### Improved

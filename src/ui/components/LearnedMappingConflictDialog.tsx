@@ -12,7 +12,6 @@ interface LearnedMappingConflictDialogProps {
 
 export function LearnedMappingConflictDialog({
   sourceLabel,
-  existing,
   existingProperty,
   newProperty,
   onReplace,
@@ -30,7 +29,7 @@ export function LearnedMappingConflictDialog({
         <div className="fp-learned-conflict-block">
           <div className="fp-meta-label">Текущее</div>
           <div>
-            {existingProperty?.name ?? existing.propertyId}
+            {existingProperty?.name ?? 'Свойство больше не существует'}
             {existingProperty?.externalId && (
               <span className="fp-property-code"> · {existingProperty.externalId}</span>
             )}

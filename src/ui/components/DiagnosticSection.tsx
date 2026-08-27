@@ -29,7 +29,7 @@ export function DiagnosticSection() {
   const fillReady = getFillReadyMatches(effectiveMatches).length;
 
   const report = buildDiagnosticsReport({
-    version: '0.9.1',
+    version: '0.9.2',
     documentStatus: fileMeta ? `${fileMeta.name} (${fileMeta.type})` : 'нет документа',
     profileName: activeProfile?.name ?? null,
     profilePropertiesCount: activeProfile?.properties.length ?? 0,

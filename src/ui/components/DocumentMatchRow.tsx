@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ProfileProperty } from '../../profile/profileTypes';
 import type { EffectiveDocumentMatch } from '../../matching/types';
 import { formatConfidence, formatMatchReasons, isLearnedUserMatch, levelIcon } from '../../matching/formatMatchReasons';
+import { resolveAlternativesForDisplay } from '../../matching/resolvePropertyDisplay';
 
 interface PropertyPickerProps {
   properties: ProfileProperty[];
@@ -63,6 +64,7 @@ interface DocumentMatchRowProps {
   characteristicValue: string;
   characteristicLocation: string | null;
   property?: ProfileProperty;
+  propertiesById: Map<string, ProfileProperty>;
   sourcePreview?: string;
   onConfirm: () => void;
   onManual: () => void;
@@ -80,6 +82,7 @@ export function DocumentMatchRow({
   characteristicValue,
   characteristicLocation,
   property,
+  propertiesById,
   sourcePreview,
   onConfirm,
   onManual,
@@ -92,6 +95,10 @@ export function DocumentMatchRow({
 }: DocumentMatchRowProps) {
   const reasons = formatMatchReasons(match.reasons).slice(0, 4);
   const learned = isLearnedUserMatch(match);
+  const displayAlternatives = useMemo(
+    () => resolveAlternativesForDisplay(match.alternatives, propertiesById),
+    [match.alternatives, propertiesById],
+  );
 
   return (
     <li className="fp-match-row">
@@ -162,13 +169,19 @@ export function DocumentMatchRow({
 
       {sourceExpanded && sourcePreview && <pre className="fp-source-preview">{sourcePreview}</pre>}
 
-      {match.alternatives.length > 0 && match.effectiveLevel !== 'high' && (
+      {displayAlternatives.length > 0 && match.effectiveLevel !== 'high' && (
         <details className="fp-subsection">
-          <summary>Возможные варианты ({match.alternatives.length})</summary>
+          <summary>Возможные варианты ({displayAlternatives.length})</summary>
           <ul className="fp-match-alternatives">
-            {match.alternatives.map((candidate) => (
-              <li key={candidate.propertyId}>
-                {formatConfidence(candidate.score)} · {candidate.propertyId}
+            {displayAlternatives.map((candidate) => (
+              <li key={candidate.propertyId} className="fp-match-alternative-row">
+                <div className="fp-match-alternative-head">
+                  <span className="fp-match-alt-score">{formatConfidence(candidate.score)}</span>
+                  <span className="fp-match-alt-name">{candidate.name}</span>
+                </div>
+                {candidate.externalId && (
+                  <div className="fp-property-code">{candidate.externalId}</div>
+                )}
               </li>
             ))}
           </ul>

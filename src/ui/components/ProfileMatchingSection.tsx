@@ -11,6 +11,7 @@ import { LearnedMappingConflictDialog } from './LearnedMappingConflictDialog';
 import { ChatGptBridgeSection } from './ChatGptBridgeSection';
 import { formatCharacteristicValue, formatSourcePreview } from './matchRowUtils';
 import { sortMatchesForDisplay } from '../../matching/sortMatchesForDisplay';
+import { formatPropertyReference } from '../../matching/resolvePropertyDisplay';
 
 type MatchFilter = 'all' | 'high' | 'review' | 'reject' | 'ignored' | 'learned';
 
@@ -101,11 +102,14 @@ export function ProfileMatchingSection() {
       return;
     }
 
-    const property = propertyById.get(propertyId);
     if (result.status === 'already-saved') {
-      setLearnFeedback(`Уже сохранено: ${characteristic.sourceLabel} → ${property?.name ?? propertyId}`);
+      setLearnFeedback(
+        `Уже сохранено: ${characteristic.sourceLabel} → ${formatPropertyReference(propertyId, propertyById)}`,
+      );
     } else {
-      setLearnFeedback(`✓ Соответствие сохранено: ${characteristic.sourceLabel} → ${property?.name ?? propertyId}`);
+      setLearnFeedback(
+        `✓ Соответствие сохранено: ${characteristic.sourceLabel} → ${formatPropertyReference(propertyId, propertyById)}`,
+      );
     }
   }
 
@@ -118,19 +122,21 @@ export function ProfileMatchingSection() {
       return;
     }
 
+    const replacedPropertyId = conflictState.propertyId;
     const result = await saveLearnedMapping(
       {
         sourceLabel: characteristic.sourceLabel,
         rawUnit: characteristic.rawUnit,
         normalizedUnit: characteristic.normalizedUnit,
       },
-      conflictState.propertyId,
+      replacedPropertyId,
       { replace: true },
     );
     setConflictState(null);
-    const property = propertyById.get(conflictState.propertyId);
     if (result.status === 'updated' || result.status === 'created') {
-      setLearnFeedback(`✓ Соответствие сохранено: ${characteristic.sourceLabel} → ${property?.name ?? conflictState.propertyId}`);
+      setLearnFeedback(
+        `✓ Соответствие сохранено: ${characteristic.sourceLabel} → ${formatPropertyReference(replacedPropertyId, propertyById)}`,
+      );
     }
   }
 
@@ -223,6 +229,7 @@ export function ProfileMatchingSection() {
                   : null
               }
               property={property}
+              propertiesById={propertyById}
               sourcePreview={formatSourcePreview(characteristic)}
               sourceExpanded={expandedSourceId === match.characteristicId}
               onToggleSource={() =>

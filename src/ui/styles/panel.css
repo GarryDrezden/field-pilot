@@ -612,6 +612,26 @@
   margin: 8px 0 0;
   padding-left: 16px;
   font-size: 12px;
+  list-style: none;
+}
+
+.fp-match-alternative-row + .fp-match-alternative-row {
+  margin-top: 8px;
+}
+
+.fp-match-alternative-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.fp-match-alt-score {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.fp-match-alt-name {
+  flex: 1 1 auto;
 }
 
 .fp-picker-overlay {

@@ -291,6 +291,12 @@ Load unpacked: папка **`dist/`**
 - Tests: canonicalization, matcher safety, review decisions, HARSLE matching (+27)
 - Bundle: `content.js` ~1506 KB (+~27 KB vs v0.3.1)
 
+### 2026-08-27 — v0.9.2 matching alternatives display labels
+
+- Alternatives resolve `propertyId` → `ProfileProperty.name` + `externalId`; internal UUID hidden from normal UI
+- Missing profile properties filtered from alternatives list
+- Tests: **180** total (+7)
+
 ### 2026-08-27 — v0.9.1 matching list display sort
 
 - Default UI sort in «Сопоставление с профилем»: 🟢 → 🟡 → 🔴 → ⚪ (stable document order within groups)
