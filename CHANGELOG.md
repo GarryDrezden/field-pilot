@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- Document session persistence via `chrome.storage.session` (`src/session/`)
+- `DocumentContext` with automatic restore after browser navigation
+- Page-independent document analysis UI: characteristics as primary result
+- Profile matching placeholder section (v0.4)
+- Stub `matchDocumentToProfile()` and `DocumentPropertyMatch` types
+- 9 unit tests for document session serialize/restore/clear/replace
+
+### Changed
+
+- Panel layout: Document → Characteristics → Profile matching → Current page → debug text
+- Raw document text collapsed by default under «Исходный текст документа»
+- Profile ↔ page mappings moved to «Связи профиля с этой страницей» subsection
+- README/ROADMAP/AGENTS: three-layer architecture (Document / Profile / Current Page)
+
 ## [0.3.0] — 2026-08-27
 
 ### Added

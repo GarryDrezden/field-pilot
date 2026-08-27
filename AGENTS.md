@@ -8,23 +8,23 @@
 
 ## Текущий статус
 
-**Версия:** v0.3.0 (Local Extraction)  
-**Milestone:** v0.1 foundation + профили/XLSX + локальное извлечение характеристик из документов.
+**Версия:** v0.3.0 (Local Extraction + document session)  
+**Milestone:** document analysis независимо от текущей страницы; профиль и документ — отдельные слои.
 
 ### Что уже работает
 
 - Manifest V3, Chrome + Opera (Chromium)
 - Панель по клику на иконку (Shadow DOM, 440px справа)
-- Загрузка PDF / DOCX, локальный парсинг
-- Form Scanner: input, textarea, select + label resolver
-- Preview извлечённого текста
-- **Извлечение характеристик:** PDF lines, DOCX tables, structured/delimited parsing
-- **ExtractedCharacteristic** с source metadata и UI preview
+- Загрузка PDF / DOCX, локальный парсинг **на любой странице** (форма не обязательна)
+- **Document → ExtractedCharacteristic** без зависимости от `scanPage()`
+- **Document session:** `chrome.storage.session` — characteristics сохраняются между навигациями
+- Form Scanner: input, textarea, select + label resolver (опциональный слой)
 - **Профили:** каталог свойств, import/export JSON, **XLSX**, CSV/TSV/TXT
 - **Reimport по externalId** — mappings сохраняются при обновлении каталога
-- **Exact matching:** saved mapping, exact label, exact alias
+- **Exact matching profile ↔ page:** saved mapping, exact label, exact alias
 - **PageFieldSignature** для восстановления связей на новой странице
-- Unit-тесты: scanner, label, pageAccess, profile import/matcher
+- UI: документ → характеристики → placeholder profile matching → текущая страница (scan)
+- Unit-тесты: extraction, session, scanner, profile import/matcher
 
 ### Что НЕ реализовано (не начинать без запроса)
 
@@ -37,15 +37,39 @@
 
 ## Архитектура (кратко)
 
+**Три независимых слоя:**
+
+1. **DOCUMENT** — источник фактических значений (`ExtractedCharacteristic[]`)
+2. **PROFILE** — каталог допустимых свойств пользователя (`ProfileProperty[]`)
+3. **CURRENT PAGE** — опциональное место назначения (`PageField[]` → fill)
+
+> **Current Page is an optional destination layer, not a prerequisite for document analysis.**
+
+Pipeline:
+
+```text
+PDF/DOCX → ExtractedCharacteristic[] → ProfileProperty[] → (optional) PageField[] → Fill
+```
+
+**Разделение storage:**
+
+| Слой | Где хранится |
+|------|----------------|
+| Profiles, mappings, settings | `chrome.storage.local` |
+| Текущий document session (meta + characteristics) | `chrome.storage.session` |
+| PageFields, fullText после navigation | runtime memory only |
+
 ```text
 src/
   background/       service worker → inject content.js
   content/          Shadow DOM host + React UI
-  ui/               React-компоненты панели
-  document/pdf|docx parsers → DocumentParseResult
+  ui/               React-компоненты панели + DocumentContext
+  document/         PDF/DOCX parsers → DocumentParseResult
+  extraction/       characteristic extraction from documents
+  session/          document session (chrome.storage.session)
+  matching/         v0.4 stubs (matchDocumentToProfile)
   form/             formScanner, labelResolver
   profile/          storage, import, export, matcher, fieldSignature
-  extraction/       characteristic extraction from documents
   shared/           types, utils
 ```
 
@@ -67,6 +91,9 @@ src/
 | `src/content/index.tsx` | Shadow DOM + React mount |
 | `src/document/pdf/reconstructPdfLines.ts` | PDF visual line reconstruction |
 | `src/extraction/extractCharacteristics.ts` | Document → ExtractedCharacteristic |
+| `src/session/documentSessionStorage.ts` | Document session в chrome.storage.session |
+| `src/ui/context/DocumentContext.tsx` | React state документа + session restore |
+| `src/matching/documentProfileMatcher.ts` | Stub matchDocumentToProfile (v0.4) |
 | `src/profile/profileXlsxImport.ts` | XLSX parse (SheetJS) |
 | `src/profile/profileImport.ts` | Column mapping, catalog merge by externalId |
 | `src/profile/profileStorage.ts` | chrome.storage.local, CRUD профилей |
@@ -101,7 +128,9 @@ Load unpacked: папка **`dist/`**
 - PDF без text layer → предупреждение, OCR позже
 - checkbox/radio не сканируются
 - `content.js` ~1.47 MB (pdfjs + mammoth + React + xlsx + extraction)
-- Document → profile matching не реализован
+- Document → profile matching не реализован (v0.4)
+- Без `storage.session` document session не переживает navigation (graceful fallback)
+- fullText документа не сохраняется в session — только source.text у каждой characteristic
 - Только exact matching (без fuzzy)
 - externalId используется для identity каталога, не для auto-match с DOM
 
@@ -186,6 +215,18 @@ Load unpacked: папка **`dist/`**
 - Conservative prose rejection; structured lines с `Max.` abbreviations
 - HARSLE PB-2000 PDF acceptance: 29 candidates, key technical params found
 - Tests: 55 total (+27); bundle ~1473 KB (+~14 KB vs v0.2.0)
+
+### 2026-08-27 — v0.3 refinement: page-independent document flow
+
+**Локально (не закоммичено по умолчанию)**
+
+- Архитектура: Document / Profile / Current Page как независимые слои
+- `src/session/*` — DocumentSession в `chrome.storage.session`
+- `DocumentContext` — restore после navigation, clear/replace document
+- UI: характеристики документа — главный результат; исходный текст свёрнут в debug
+- Profile ↔ Page mappings — subsection «Связи профиля с этой страницей»
+- Placeholder «Сопоставление с профилем» (v0.4), stub `matchDocumentToProfile()`
+- README/ROADMAP: обновлён pipeline и концепция
 
 ---
 

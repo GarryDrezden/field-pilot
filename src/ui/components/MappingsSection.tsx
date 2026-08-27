@@ -6,6 +6,7 @@ import { useProfiles } from '../hooks/useProfiles';
 
 interface MappingsSectionProps {
   fields: FormField[];
+  compact?: boolean;
 }
 
 function matchSourceLabel(source: ProfileMatchSummary['rows'][number]['matchSource']): string {
@@ -21,7 +22,7 @@ function matchSourceLabel(source: ProfileMatchSummary['rows'][number]['matchSour
   }
 }
 
-export function MappingsSection({ fields }: MappingsSectionProps) {
+export function MappingsSection({ fields, compact = false }: MappingsSectionProps) {
   const { activeProfile, saveMapping } = useProfiles();
   const [filter, setFilter] = useState<MappingFilter>('all');
   const [search, setSearch] = useState('');
@@ -81,13 +82,21 @@ export function MappingsSection({ fields }: MappingsSectionProps) {
   return (
     <div className="fp-mappings">
       <div className="fp-mapping-stats">
-        <div>Свойств профиля: {summary.profilePropertyCount}</div>
-        <div>Полей страницы: {summary.pageFieldCount}</div>
-        <div>Связано: {summary.linkedCount}</div>
-        <div>Exact match: {summary.exactLabelCount + summary.exactAliasCount}</div>
-        <div>Manual: {summary.manualCount}</div>
-        <div>Неоднозначно: {summary.ambiguousCount}</div>
-        <div>Не на странице: {summary.notOnPageCount}</div>
+        {compact ? (
+          <>
+            <div>Связано на этой странице: {summary.linkedCount}</div>
+            <div>Полей страницы: {summary.pageFieldCount}</div>
+          </>
+        ) : (
+          <>
+            <div>Свойств профиля: {summary.profilePropertyCount}</div>
+            <div>Полей страницы: {summary.pageFieldCount}</div>
+            <div>Связано: {summary.linkedCount}</div>
+            <div>Exact match: {summary.exactLabelCount + summary.exactAliasCount}</div>
+            <div>Manual: {summary.manualCount}</div>
+            <div>Неоднозначно: {summary.ambiguousCount}</div>
+          </>
+        )}
       </div>
 
       <div className="fp-toolbar">

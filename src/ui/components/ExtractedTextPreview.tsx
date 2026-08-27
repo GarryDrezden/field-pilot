@@ -15,8 +15,8 @@ export function ExtractedTextPreview({ text }: ExtractedTextPreviewProps) {
   );
 
   return (
-    <details className="fp-preview" open>
-      <summary>Извлечённый текст</summary>
+    <details className="fp-preview fp-debug-section">
+      <summary>Исходный текст документа</summary>
       <pre>{preview}</pre>
       {text.length > PREVIEW_LIMIT && (
         <button

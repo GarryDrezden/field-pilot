@@ -30,12 +30,8 @@ export function ExtractedCharacteristicsPanel({ extraction }: ExtractedCharacter
   }, [extraction.characteristics, search, filter]);
 
   return (
-    <section className="fp-characteristics">
-      <h3>Найденные характеристики</h3>
-      <p className="fp-status is-ready">
-        Найдено: {extraction.stats.total} · числовых: {extraction.stats.numeric} · текстовых:{' '}
-        {extraction.stats.text}
-      </p>
+    <div className="fp-characteristics">
+      <p className="fp-status is-ready">Найдено: {extraction.stats.total}</p>
 
       {extraction.warnings.length > 0 && (
         <ul className="fp-warning-list">
@@ -78,7 +74,7 @@ export function ExtractedCharacteristicsPanel({ extraction }: ExtractedCharacter
       </ul>
 
       {filtered.length === 0 && <p className="fp-empty">Характеристики не найдены.</p>}
-    </section>
+    </div>
   );
 }
 

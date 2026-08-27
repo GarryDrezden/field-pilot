@@ -4,17 +4,15 @@ Roadmap описывает направление разработки FieldPilo
 
 Главная цель MVP:
 
-> Открыть веб-форму → загрузить документ → получить проверяемые соответствия → заполнить выбранные поля.
+> Загрузить документ → получить характеристики → сопоставить с профилем → (опционально) заполнить форму на нужной странице.
 
 Целевой pipeline:
 
 ```text
-Document
-  ↓ extracted characteristic
-Profile property
-  ↓ mapping
-Current page field
+Document → ExtractedCharacteristic → ProfileProperty → (optional) PageField → Fill
 ```
+
+**Current Page — опциональный слой назначения, не prerequisite для анализа документа.**
 
 ---
 
@@ -57,7 +55,7 @@ Current page field
 
 ## v0.3 — Local Extraction ✅
 
-Превратить текст документа в структурированные характеристики.
+Превратить текст документа в структурированные характеристики **независимо от текущей страницы**.
 
 - [x] PDF line reconstruction (PDF.js coordinates)
 - [x] `ExtractedCharacteristic` + `ExtractionResult`
@@ -67,20 +65,24 @@ Current page field
 - [x] source metadata (page, line, table, row)
 - [x] conservative prose rejection
 - [x] exact deduplication
-- [x] UI: «Найденные характеристики»
+- [x] UI: «Характеристики документа» как главный результат; debug text collapsed
+- [x] **Document session** в `chrome.storage.session` (characteristics между навигациями)
+- [x] `DocumentContext` — extraction не зависит от PageFields
+- [x] placeholder UI для document → profile matching (v0.4)
 - [x] tests + HARSLE PDF acceptance
 
-**Результат:** FieldPilot локально находит структурированные пары label/value/unit в PDF/DOCX.
+**Результат:** FieldPilot локально находит structured label/value/unit на любой вкладке; session переживает navigation в рамках browser session.
 
 ---
 
 ## v0.4 — Matching Engine (CURRENT)
 
 ```text
-document characteristic → profile property → page field
+ExtractedCharacteristic → ProfileProperty
+(then existing ProfileProperty → PageField mapping for fill)
 ```
 
-- [ ] сопоставление характеристик документа со свойствами профиля
+- [ ] `matchDocumentToProfile(characteristics, profile.properties)` — без PageField в решении
 - [ ] словарь синонимов, token matching (без LLM)
 - [ ] confidence score (🟢 / 🟡 / 🔴)
 - [ ] объяснение причины совпадения

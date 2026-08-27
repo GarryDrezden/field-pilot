@@ -2,7 +2,7 @@
 
 **FieldPilot** — браузерное расширение для извлечения данных из PDF и DOCX и последующего заполнения веб-форм.
 
-Идея проста: пользователь открывает нужную страницу, загружает технический документ, а FieldPilot анализирует документ и поля текущей страницы, сопоставляет найденные данные и позволяет проверить их перед заполнением.
+FieldPilot разбирает технический документ **независимо от текущей страницы**: форма на сайте нужна только на этапе заполнения. Можно заранее загрузить PDF на любой вкладке, проверить извлечённые характеристики и перейти к карточке товара позже — документ сохранится в рамках browser session.
 
 Проект не привязан к конкретной CMS, сайту или типу товара.
 
@@ -12,11 +12,11 @@
 
 Технические характеристики товаров часто приходят в виде PDF, коммерческих предложений, каталогов и DOCX-файлов. Затем эти данные приходится вручную переносить в административную панель сайта.
 
-FieldPilot должен сократить этот процесс до:
+FieldPilot сокращает ручной перенос характеристик до pipeline:
 
-**открыть товар → загрузить документ → проверить найденные данные → заполнить форму.**
+**загрузить документ → проверить характеристики → (опционально) сопоставить с профилем → (опционально) заполнить форму на нужной странице.**
 
-При этом окончательное сохранение страницы всегда остаётся за пользователем.
+Анализ документа не требует открытой формы. Профиль — каталог целевых свойств. Веб-страница — только место назначения для уже разобранных значений.
 
 ## Profile (профиль)
 
@@ -59,11 +59,12 @@ FieldPilot автоматически распознаёт колонки:
 ### v0.3 — Local Extraction
 
 - PDF line reconstruction по координатам PDF.js (visual lines вместо `join(' ')`)
-- Локальное извлечение `ExtractedCharacteristic` из PDF/DOCX без профиля и без AI
+- Локальное извлечение `ExtractedCharacteristic` из PDF/DOCX без профиля, без page scan и без AI
 - Парсер значений: integer, decimal, ±, range, dimension
 - Нормализация единиц RU/EN (longest-match-first: `m/min` ≠ `m`)
-- Источники: DOCX tables → PDF lines → delimited lines (`:`, `=`, `/`, `●`)
-- UI: «Найденные характеристики» с поиском, фильтром и preview источника
+- UI: «Характеристики документа» — главный результат; исходный текст в свёрнутом debug-блоке
+- **Document session:** characteristics сохраняются в `chrome.storage.session` между навигациями
+- Placeholder для document → profile matching (v0.4)
 
 ## Pipeline
 
@@ -72,20 +73,21 @@ Document
    ↓
 ExtractedCharacteristic       ✅ v0.3
    ↓
-ProfileProperty               ⏳ v0.4
+ProfileProperty               ⏳ v0.4 (matching)
    ↓
-PageField                     ✅ v0.2
+PageField                     ✅ v0.2 (profile ↔ page)
    ↓
 Fill                          ⏳ v0.5
 ```
 
 **Сейчас работают:**
 
-- document parsing + preview (v0.1)
-- **document → extracted characteristics** (v0.3)
-- profile property ↔ page field (v0.2)
+- document parsing (v0.1)
+- **document → extracted characteristics, page-independent** (v0.3)
+- profile property ↔ page field exact matching (v0.2)
+- document session persistence в browser session (v0.3)
 
-**Следующий шаг:** document characteristic → profile property matching (v0.4).
+**Следующий шаг:** `matchDocumentToProfile(characteristics, profile.properties)` (v0.4).
 
 ## Что запланировано
 
@@ -123,7 +125,7 @@ FieldPilot не должен делать вид, что уверен там, г
 
 **В локальном режиме документы обрабатываются внутри браузера и никуда не отправляются.**
 
-На v0.1 содержимое загруженных документов не сохраняется в `chrome.storage` — после перезагрузки страницы документ нужно загрузить снова.
+Результат разбора документа (метаданные файла + `ExtractedCharacteristic[]`) сохраняется в **`chrome.storage.session`** до закрытия browser session. Бинарный файл, полный текст документа и поля страницы в storage не попадают. Профили и mappings — в `chrome.storage.local`.
 
 ## Поддерживаемые браузеры
 
@@ -156,17 +158,13 @@ PDF / DOCX
     ↓
 Document Parser
     ↓
-Extracted Document
+Characteristic Extraction   ← v0.3
     ↓
-Characteristic Extraction   ← v0.2
+Profile Matching            ← v0.4
     ↓
-Matching Engine             ← v0.3
-    ↕
-Form Scanner                ← v0.1
+PageField (optional scan)   ← v0.2
     ↓
-Confidence / Review         ← v0.3–v0.4
-    ↓
-Fill selected fields        ← v0.4
+Review & Fill               ← v0.5
 ```
 
 Структура проекта:
@@ -177,6 +175,10 @@ src/
   content/        injected panel host (Shadow DOM)
   ui/             React-интерфейс панели
   document/       PDF/DOCX parsers
+  extraction/     characteristic extraction
+  session/        document session storage
+  matching/       document ↔ profile (v0.4 stub)
+  profile/        profiles, import, page matching
   form/           FormScanner, label resolver
   shared/         types, utils
 ```
@@ -233,13 +235,25 @@ npm run test
 3. Выберите загрузку распакованного расширения
 4. Укажите директорию `dist/`
 
-## Ручная проверка v0.1
+## Ручная проверка
 
-1. Соберите проект и загрузите `dist/` как unpacked extension
-2. Откройте любую страницу с HTML-формой
-3. Нажмите иконку FieldPilot — справа должна появиться панель
-4. Загрузите PDF или DOCX и проверьте preview текста
-5. Нажмите «Сканировать страницу» и убедитесь, что поля найдены
+### Без формы на странице
+
+1. Откройте любую страницу без формы (например google.com)
+2. Откройте FieldPilot, выберите профиль
+3. Загрузите PDF — должны появиться «Характеристики документа»
+4. Не нажимайте «Сканировать страницу» — всё должно работать
+
+### Navigation + session
+
+1. Загрузите PDF, запомните число характеристик
+2. Перейдите на другой URL, снова откройте FieldPilot
+3. Документ и характеристики восстановлены; PageFields пусты до scan
+
+### Profile ↔ page (v0.2)
+
+1. Откройте страницу с HTML-формой
+2. «Сканировать страницу» → «Связи профиля с этой страницей»
 
 ## Ограничения текущей версии
 
