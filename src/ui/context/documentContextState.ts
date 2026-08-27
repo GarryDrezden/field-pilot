@@ -15,6 +15,7 @@ export interface DocumentContextValue {
   errorMessage: string | null;
   extractionError: string | null;
   restoredFromSession: boolean;
+  sessionPersistError: boolean;
   loadFile: (file: File) => Promise<void>;
   clearDocument: () => Promise<void>;
 }

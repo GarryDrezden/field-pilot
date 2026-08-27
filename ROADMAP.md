@@ -75,6 +75,23 @@ Document → ExtractedCharacteristic → ProfileProperty → (optional) PageFiel
 
 ---
 
+## v0.3.1 — Document Workspace / Session ✅
+
+Уточнение архитектуры и UX после реального использования.
+
+- [x] Document / Profile / Current Page как независимые слои
+- [x] `chrome.storage.session` для metadata + `ExtractedCharacteristic[]`
+- [x] `DocumentContext` — restore после navigation, clear/replace
+- [x] Characteristics — главный UI; raw text в debug (collapsed)
+- [x] Profile ↔ page mappings — subsection «Связи профиля с этой страницей»
+- [x] Placeholder document → profile matching (v0.4)
+- [x] Graceful fallback при недоступном/corrupt session storage
+- [x] PageFields только в runtime memory
+
+**Результат:** разобрать документ на любой странице, перейти к карточке товара, продолжить без повторной загрузки PDF.
+
+---
+
 ## v0.4 — Matching Engine (CURRENT)
 
 ```text

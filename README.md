@@ -56,6 +56,14 @@ FieldPilot автоматически распознаёт колонки:
 
 При повторном импорте того же каталога свойства сопоставляются по **`externalId`**, а не по названию — внутренние ID и mappings сохраняются. Одинаковые названия с разными `externalId` (например PARAM2226 и PARAM2248) остаются разными свойствами.
 
+### v0.3.1 — Document Workspace / Session
+
+- **Document session** в `chrome.storage.session` — characteristics между навигациями
+- Анализ документа **на любой странице** (форма не обязательна)
+- Characteristics — главный результат; исходный текст — debug
+- Current Page — optional destination layer
+- Placeholder для document → profile matching (v0.4)
+
 ### v0.3 — Local Extraction
 
 - PDF line reconstruction по координатам PDF.js (visual lines вместо `join(' ')`)

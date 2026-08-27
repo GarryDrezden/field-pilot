@@ -80,6 +80,55 @@ describe('documentSessionStorage', () => {
     expect(json.includes('properties')).toBe(false);
     expect(json.includes('mappings')).toBe(false);
   });
+
+  it('restores file metadata on roundtrip', () => {
+    const json = serializeDocumentSession(sampleSession);
+    const restored = deserializeDocumentSession(json);
+    expect(restored?.fileMeta).toEqual({
+      name: 'test.pdf',
+      type: 'pdf',
+      size: 6400000,
+    });
+  });
+
+  it('preserves source metadata and value kinds on roundtrip', () => {
+    const mixedSession: DocumentSession = {
+      ...sampleSession,
+      characteristics: [
+        sampleSession.characteristics[0]!,
+        {
+          id: 'c2',
+          sourceLabel: 'Feeding Structure',
+          rawValue: 'Pressing Arm',
+          normalizedValue: 'Pressing Arm',
+          valueKind: 'text',
+          extractionMethod: 'delimited-line',
+          source: { text: '14. Feeding Structure / Pressing Arm', pageNumber: 15, lineNumber: 30 },
+        },
+      ],
+      extractionStats: { total: 2, numeric: 1, text: 1, table: 0, lines: 2 },
+    };
+    const restored = deserializeDocumentSession(serializeDocumentSession(mixedSession));
+    expect(restored?.characteristics[0]?.valueKind).toBe('number');
+    expect(restored?.characteristics[0]?.source.pageNumber).toBe(15);
+    expect(restored?.characteristics[1]?.valueKind).toBe('text');
+    expect(restored?.characteristics[1]?.source.text).toContain('Pressing Arm');
+  });
+
+  it('accepts legacy file alias in stored session', () => {
+    const legacy = {
+      schemaVersion: DOCUMENT_SESSION_SCHEMA_VERSION,
+      file: { name: 'legacy.pdf', type: 'pdf' },
+      characteristics: sampleSession.characteristics,
+      createdAt: sampleSession.createdAt,
+    };
+    expect(parseDocumentSession(legacy)?.fileMeta.name).toBe('legacy.pdf');
+  });
+
+  it('rejects corrupted session payloads', () => {
+    expect(deserializeDocumentSession('{not json')).toBeNull();
+    expect(parseDocumentSession({ schemaVersion: 1, fileMeta: { name: 'x.pdf', type: 'txt' } })).toBeNull();
+  });
 });
 
 describe('documentSessionStorage adapter', () => {
@@ -142,5 +191,26 @@ describe('documentSessionStorage adapter', () => {
   it('reports unavailable session storage when chrome.session is missing', () => {
     vi.stubGlobal('chrome', { storage: {} });
     expect(isSessionStorageAvailable()).toBe(false);
+  });
+
+  it('clears corrupted session on read', async () => {
+    store.fieldpilot_document_session = { schemaVersion: 99, fileMeta: { name: 'bad.pdf', type: 'pdf' } };
+    expect(await getDocumentSession()).toBeNull();
+    expect(store.fieldpilot_document_session).toBeUndefined();
+  });
+
+  it('returns false when session save fails', async () => {
+    vi.stubGlobal('chrome', {
+      storage: {
+        session: {
+          get: vi.fn(async () => ({})),
+          set: vi.fn(async () => {
+            throw new Error('quota');
+          }),
+          remove: vi.fn(async () => undefined),
+        },
+      },
+    });
+    expect(await saveDocumentSession(sampleSession)).toBe(false);
   });
 });

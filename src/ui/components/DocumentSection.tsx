@@ -17,6 +17,8 @@ export function DocumentSection() {
     parseWarnings,
     loadFile,
     clearDocument,
+    restoredFromSession,
+    sessionPersistError,
   } = useDocument();
 
   function onInputChange(event: React.ChangeEvent<HTMLInputElement>): void {
@@ -53,7 +55,13 @@ export function DocumentSection() {
 
       {!sessionAvailable && (
         <p className="fp-status fp-session-hint">
-          Сессия документа недоступна — после перехода на другую страницу потребуется повторная загрузка.
+          Не удалось сохранить текущий документ между переходами.
+        </p>
+      )}
+
+      {sessionPersistError && sessionAvailable && (
+        <p className="fp-status fp-session-hint">
+          Не удалось сохранить текущий документ между переходами.
         </p>
       )}
 
@@ -88,9 +96,13 @@ export function DocumentSection() {
               {fileMeta.size !== undefined ? ` · ${formatFileSize(fileMeta.size)}` : ''}
             </div>
             <ul className="fp-document-checks">
-              <li className={status === 'parsing' ? '' : 'is-done'}>
-                {status === 'parsing' ? 'Разбор документа…' : '✓ Текст извлечён'}
-              </li>
+              {restoredFromSession ? (
+                <li className="is-done">✓ Разобрано в текущей сессии</li>
+              ) : (
+                <li className={status === 'parsing' ? '' : 'is-done'}>
+                  {status === 'parsing' ? 'Разбор документа…' : '✓ Текст извлечён'}
+                </li>
+              )}
               {extraction && (
                 <li className="is-done">
                   ✓ Найдено характеристик: {extraction.stats.total}
@@ -104,7 +116,7 @@ export function DocumentSection() {
                 onClick={() => replaceInputRef.current?.click()}
                 disabled={status === 'parsing'}
               >
-                Заменить документ
+                {restoredFromSession ? 'Загрузить другой' : 'Заменить документ'}
               </button>
               <button
                 type="button"

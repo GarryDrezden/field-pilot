@@ -65,7 +65,7 @@ export function PageFieldsSection() {
         </>
       ) : (
         !scanError &&
-        !isScanning && <p className="fp-empty">Поля ещё не сканировались.</p>
+        !isScanning && <p className="fp-empty">Поля не сканировались.</p>
       )}
     </section>
   );

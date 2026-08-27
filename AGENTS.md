@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.3.0 (Local Extraction + document session)  
-**Milestone:** document analysis независимо от текущей страницы; профиль и документ — отдельные слои.
+**Версия:** v0.3.1 (Document Workspace / Session)  
+**Milestone:** page-independent document analysis; session persistence между навигациями.
 
 ### Что уже работает
 
@@ -215,6 +215,14 @@ Load unpacked: папка **`dist/`**
 - Conservative prose rejection; structured lines с `Max.` abbreviations
 - HARSLE PB-2000 PDF acceptance: 29 candidates, key technical params found
 - Tests: 55 total (+27); bundle ~1473 KB (+~14 KB vs v0.2.0)
+
+### 2026-08-27 — v0.3.1 Document Workspace / Session
+
+**Коммит:** (pending)
+
+- Версия 0.3.1: corrupt session cleanup, restore UX, session persist errors
+- Дополнительные unit tests для session roundtrip и legacy `file` alias
+- CHANGELOG/ROADMAP/README синхронизированы с v0.3.1
 
 ### 2026-08-27 — v0.3 refinement: page-independent document flow
 

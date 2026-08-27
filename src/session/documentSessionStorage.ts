@@ -31,12 +31,19 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
     return null;
   }
 
-  const session = raw as Partial<DocumentSession>;
+  const session = raw as Partial<DocumentSession> & {
+    file?: DocumentSessionFileMeta;
+  };
   if (session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION) {
     return null;
   }
 
-  if (!session.fileMeta?.name || !session.fileMeta.type) {
+  const fileMeta = session.fileMeta ?? session.file;
+  if (!fileMeta?.name || !fileMeta.type) {
+    return null;
+  }
+
+  if (fileMeta.type !== 'pdf' && fileMeta.type !== 'docx') {
     return null;
   }
 
@@ -47,9 +54,9 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
   return {
     schemaVersion: DOCUMENT_SESSION_SCHEMA_VERSION,
     fileMeta: {
-      name: session.fileMeta.name,
-      type: session.fileMeta.type,
-      size: session.fileMeta.size,
+      name: fileMeta.name,
+      type: fileMeta.type,
+      size: fileMeta.size,
     },
     characteristics: session.characteristics,
     extractionWarnings: Array.isArray(session.extractionWarnings) ? session.extractionWarnings : [],
@@ -78,8 +85,23 @@ export async function getDocumentSession(): Promise<DocumentSession | null> {
     return null;
   }
 
-  const result = await chrome.storage.session.get(DOCUMENT_SESSION_STORAGE_KEY);
-  return parseDocumentSession(result[DOCUMENT_SESSION_STORAGE_KEY]);
+  try {
+    const result = await chrome.storage.session.get(DOCUMENT_SESSION_STORAGE_KEY);
+    const raw = result[DOCUMENT_SESSION_STORAGE_KEY];
+    if (raw === undefined) {
+      return null;
+    }
+
+    const session = parseDocumentSession(raw);
+    if (!session) {
+      await clearDocumentSession();
+      return null;
+    }
+
+    return session;
+  } catch {
+    return null;
+  }
 }
 
 export async function saveDocumentSession(session: DocumentSession): Promise<boolean> {
@@ -87,8 +109,12 @@ export async function saveDocumentSession(session: DocumentSession): Promise<boo
     return false;
   }
 
-  await chrome.storage.session.set({ [DOCUMENT_SESSION_STORAGE_KEY]: session });
-  return true;
+  try {
+    await chrome.storage.session.set({ [DOCUMENT_SESSION_STORAGE_KEY]: session });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function clearDocumentSession(): Promise<void> {

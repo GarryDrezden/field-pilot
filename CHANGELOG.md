@@ -4,14 +4,16 @@
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-08-27
+
 ### Added
 
 - Document session persistence via `chrome.storage.session` (`src/session/`)
 - `DocumentContext` with automatic restore after browser navigation
-- Page-independent document analysis UI: characteristics as primary result
+- Page-independent document workspace: characteristics as primary result
 - Profile matching placeholder section (v0.4)
 - Stub `matchDocumentToProfile()` and `DocumentPropertyMatch` types
-- 9 unit tests for document session serialize/restore/clear/replace
+- Unit tests for document session serialize/restore/clear/replace/corrupt handling
 
 ### Changed
 
@@ -19,6 +21,11 @@
 - Raw document text collapsed by default under «Исходный текст документа»
 - Profile ↔ page mappings moved to «Связи профиля с этой страницей» subsection
 - README/ROADMAP/AGENTS: three-layer architecture (Document / Profile / Current Page)
+
+### Fixed / Architecture
+
+- Document analysis no longer conceptually depends on current page scan
+- Corrupt or unsupported session payloads are cleared without affecting profile data
 
 ## [0.3.0] — 2026-08-27
 
@@ -79,7 +86,8 @@
 - `scripts/verify-build.mjs` — проверка injectable content bundle
 - Permissions: `activeTab`, `scripting`, `storage` only
 
-[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/GarryDrezden/field-pilot/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/GarryDrezden/field-pilot/commit/17decdd

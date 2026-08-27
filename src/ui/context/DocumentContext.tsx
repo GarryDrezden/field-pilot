@@ -30,6 +30,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [restoredFromSession, setRestoredFromSession] = useState(false);
+  const [sessionPersistError, setSessionPersistError] = useState(false);
 
   const restoreSession = useCallback(async () => {
     const available = isSessionStorageAvailable();
@@ -38,19 +39,24 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const session = await getDocumentSession();
-    if (!session) {
-      return;
-    }
+    try {
+      const session = await getDocumentSession();
+      if (!session) {
+        return;
+      }
 
-    setFileMeta(session.fileMeta);
-    setExtraction(extractionFromSession(session));
-    setParseWarnings(session.extractionWarnings);
-    setFullText(null);
-    setStatus('ready');
-    setRestoredFromSession(true);
-    setErrorMessage(null);
-    setExtractionError(null);
+      setFileMeta(session.fileMeta);
+      setExtraction(extractionFromSession(session));
+      setParseWarnings(session.extractionWarnings);
+      setFullText(null);
+      setStatus('ready');
+      setRestoredFromSession(true);
+      setErrorMessage(null);
+      setExtractionError(null);
+      setSessionPersistError(false);
+    } catch {
+      setSessionPersistError(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -68,10 +74,14 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       textExtracted: boolean,
     ) => {
       if (!isSessionStorageAvailable()) {
-        return;
+        return false;
       }
 
-      await saveDocumentSession(buildDocumentSession(nextFileMeta, nextExtraction, textExtracted));
+      const saved = await saveDocumentSession(
+        buildDocumentSession(nextFileMeta, nextExtraction, textExtracted),
+      );
+      setSessionPersistError(!saved);
+      return saved;
     },
     [],
   );
@@ -92,6 +102,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setErrorMessage(null);
       setExtractionError(null);
       setRestoredFromSession(false);
+      setSessionPersistError(false);
 
       try {
         const result = await parseDocumentFile(file);
@@ -138,6 +149,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     setErrorMessage(null);
     setExtractionError(null);
     setRestoredFromSession(false);
+    setSessionPersistError(false);
     await clearDocumentSession();
   }, []);
 
@@ -152,6 +164,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     errorMessage,
     extractionError,
     restoredFromSession,
+    sessionPersistError,
     loadFile,
     clearDocument,
   };
