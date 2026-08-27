@@ -224,6 +224,14 @@ Load unpacked: папка **`dist/`**
 - Дополнительные unit tests для session roundtrip и legacy `file` alias
 - CHANGELOG/ROADMAP/README синхронизированы с v0.3.1
 
+### 2026-08-27 — New extension icon
+
+**Коммит:** (pending)
+
+- Новая иконка: документ с выделенной характеристикой + badge «извлечено»
+- Teal-градиент вместо синего; без схемы «стрелка → форма»
+- `scripts/generate-icons.mjs`, `public/icons/icon{16,48,128}.png`
+
 ### 2026-08-27 — v0.3 refinement: page-independent document flow
 
 **Коммит:** `248dbb1`
