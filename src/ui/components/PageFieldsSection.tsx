@@ -1,33 +1,33 @@
-import { useState } from 'react';
-import { scanPageFormFields } from '../../form/formScanner';
-import type { FormField } from '../../shared/types/form';
+import { useEffect, useRef, useState } from 'react';
 import { MappingsSection } from './MappingsSection';
+import { usePageContext } from '../context/pageContextState';
 
 export function PageFieldsSection() {
-  const [fields, setFields] = useState<FormField[]>([]);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
+  const {
+    fields,
+    isScanning,
+    scanError,
+    hasScanned,
+    scanPage,
+    focusMappingPropertyId,
+    clearMappingFocus,
+  } = usePageContext();
   const [showFieldList, setShowFieldList] = useState(false);
+  const [mappingsOpen, setMappingsOpen] = useState(false);
+  const mappingsRef = useRef<HTMLDetailsElement>(null);
 
-  function handleScan(): void {
-    setIsScanning(true);
-    setScanError(null);
-
-    try {
-      const result = scanPageFormFields(document);
-      setFields(result.fields);
-    } catch (error) {
-      setScanError(error instanceof Error ? error.message : 'Не удалось просканировать страницу.');
-      setFields([]);
-    } finally {
-      setIsScanning(false);
+  useEffect(() => {
+    if (!focusMappingPropertyId) {
+      return;
     }
-  }
+    setMappingsOpen(true);
+    mappingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [focusMappingPropertyId]);
 
   return (
     <section className="fp-section">
       <h2>Текущая страница</h2>
-      <button type="button" className="fp-button" onClick={handleScan} disabled={isScanning}>
+      <button type="button" className="fp-button" onClick={scanPage} disabled={isScanning}>
         {isScanning ? 'Сканирование…' : 'Сканировать страницу'}
       </button>
 
@@ -58,14 +58,32 @@ export function PageFieldsSection() {
             </ul>
           )}
 
-          <details className="fp-subsection">
+          <details
+            ref={mappingsRef}
+            className="fp-subsection"
+            open={mappingsOpen}
+            onToggle={(event) => {
+              setMappingsOpen(event.currentTarget.open);
+              if (!event.currentTarget.open) {
+                clearMappingFocus();
+              }
+            }}
+          >
             <summary>Связи профиля с этой страницей</summary>
-            <MappingsSection fields={fields} compact />
+            <MappingsSection
+              fields={fields}
+              compact
+              highlightPropertyId={focusMappingPropertyId}
+            />
           </details>
         </>
       ) : (
-        !scanError &&
-        !isScanning && <p className="fp-empty">Поля не сканировались.</p>
+        hasScanned &&
+        !scanError && <p className="fp-empty">Поля не найдены.</p>
+      )}
+
+      {!hasScanned && !scanError && !isScanning && (
+        <p className="fp-empty">Поля не сканировались.</p>
       )}
     </section>
   );

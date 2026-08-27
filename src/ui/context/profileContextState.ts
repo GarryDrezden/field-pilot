@@ -21,6 +21,13 @@ export interface ProfileContextValue {
     field: Parameters<typeof profileStorage.savePropertyMapping>[2],
   ) => Promise<void>;
   removeMapping: (propertyId: string) => Promise<void>;
+  saveLearnedMapping: (
+    characteristic: Parameters<typeof profileStorage.saveLearnedDocumentMapping>[1],
+    propertyId: string,
+    options?: { replace?: boolean },
+  ) => Promise<import('../../learning/learnedMappings').LearnedMappingSaveResult>;
+  removeLearnedMapping: (mappingId: string) => Promise<void>;
+  changeLearnedMappingProperty: (mappingId: string, propertyId: string) => Promise<void>;
   addProperty: (draft: ImportedPropertyDraft) => Promise<void>;
   updateProperty: (
     propertyId: string,

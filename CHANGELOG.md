@@ -4,6 +4,47 @@
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-08-27
+
+### Added
+
+- Persistent explicit document→profile learning (`LearnedDocumentMapping` per profile)
+- «Запомнить соответствие» action in matching UI (separate from session confirm)
+- Learned mapping management UI («Словарь соответствий»)
+- Learned-match priority in `matchDocumentToProfile()` (above alias/name/semantic)
+- Profile export/import v2 with `learnedMappings`
+- Profile storage schema v2 migration (non-destructive)
+
+### Safety
+
+- No implicit learning from automatic HIGH, review confirm, fill, or page mappings
+- Unit-conflict protection for learned rules
+- Learning is page-independent (document label → ProfileProperty only)
+- Fill remains explicit and destination-only
+
+## [0.5.0] — 2026-08-27
+
+### Added
+
+- Fill planning layer (`buildFillPlan`) from `getFillReadyMatches()` + profile/page mappings
+- Fill preview UI with per-row selection and source preview
+- Safe DOM fill for `input[type=text|number]`, `textarea`, `select`
+- Existing-value protection + explicit overwrite checkbox
+- `already-equal` skip, readonly/disabled detection, destination re-resolve before write
+- Select exact option matching (value / text / normalized value)
+- Fill result summary + runtime undo for last fill batch
+- `PageContext` for shared page scan state
+
+### Changed
+
+- Current Page section becomes actionable destination for approved document/profile matches
+
+### Security / Safety
+
+- No auto-submit / auto-save
+- No automatic overwrite of non-empty fields
+- Blocked input types: password, hidden, file, submit, button, reset, checkbox, radio, date/time, color, range
+
 ## [0.4.0] — 2026-08-27
 
 ### Added

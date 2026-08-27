@@ -1,4 +1,10 @@
 import { buildFieldSignature } from './fieldSignature';
+import {
+  createLearnedMappingDraft,
+  upsertLearnedMapping,
+  deleteLearnedMappingById,
+  updateLearnedMappingProperty,
+} from '../learning/learnedMappings';
 import type {
   CatalogMergeReport,
   FieldProfile,
@@ -11,6 +17,21 @@ import { buildProfileFromImport, parseProfileExport, serializeProfileExport } fr
 import { mergeCatalogIntoProfile, mergeImportedProperties } from './profileImport';
 
 const STORAGE_KEY = 'fieldpilot_profiles';
+
+function normalizeProfile(profile: FieldProfile): FieldProfile {
+  return {
+    ...profile,
+    learnedMappings: profile.learnedMappings ?? [],
+  };
+}
+
+function migrateState(raw: import('./profileTypes').ProfileStorageState): import('./profileTypes').ProfileStorageState {
+  return {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    activeProfileId: raw.activeProfileId ?? null,
+    profiles: (raw.profiles ?? []).map(normalizeProfile),
+  };
+}
 
 export function createId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -27,14 +48,13 @@ async function readState(): Promise<import('./profileTypes').ProfileStorageState
   }
 
   if (raw.schemaVersion !== STORAGE_SCHEMA_VERSION) {
-    return {
-      schemaVersion: STORAGE_SCHEMA_VERSION,
-      activeProfileId: raw.activeProfileId ?? null,
-      profiles: raw.profiles ?? [],
-    };
+    return migrateState(raw);
   }
 
-  return raw;
+  return {
+    ...raw,
+    profiles: raw.profiles.map(normalizeProfile),
+  };
 }
 
 async function writeState(state: import('./profileTypes').ProfileStorageState): Promise<void> {
@@ -88,6 +108,7 @@ export async function createProfile(name: string): Promise<FieldProfile> {
     updatedAt: now,
     properties: [],
     mappings: [],
+    learnedMappings: [],
   };
 
   const state = await readState();
@@ -281,4 +302,71 @@ export async function createProfileFromCatalog(
 ): Promise<{ profile: FieldProfile; report: CatalogMergeReport }> {
   const profile = await createProfile(name);
   return importPropertiesIntoProfile(profile.id, drafts);
+}
+
+export async function saveLearnedDocumentMapping(
+  profileId: string,
+  characteristic: Parameters<typeof createLearnedMappingDraft>[0],
+  propertyId: string,
+  options?: { replace?: boolean },
+): Promise<{
+  profile: FieldProfile;
+  result: import('../learning/learnedMappings').LearnedMappingSaveResult;
+}> {
+  const profile = await getProfile(profileId);
+  if (!profile) {
+    throw new Error('Профиль не найден.');
+  }
+
+  if (!profile.properties.some((property) => property.id === propertyId)) {
+    throw new Error('Свойство не найдено.');
+  }
+
+  const draft = createLearnedMappingDraft(characteristic, propertyId, createId);
+  const { mappings, result } = upsertLearnedMapping(
+    profile.learnedMappings,
+    draft,
+    Boolean(options?.replace),
+  );
+
+  const updated = await updateProfile({ ...profile, learnedMappings: mappings });
+  return { profile: updated, result };
+}
+
+export async function removeLearnedDocumentMapping(
+  profileId: string,
+  mappingId: string,
+): Promise<FieldProfile> {
+  const profile = await getProfile(profileId);
+  if (!profile) {
+    throw new Error('Профиль не найден.');
+  }
+
+  return updateProfile({
+    ...profile,
+    learnedMappings: deleteLearnedMappingById(profile.learnedMappings, mappingId),
+  });
+}
+
+export async function changeLearnedMappingProperty(
+  profileId: string,
+  mappingId: string,
+  propertyId: string,
+): Promise<FieldProfile> {
+  const profile = await getProfile(profileId);
+  if (!profile) {
+    throw new Error('Профиль не найден.');
+  }
+
+  const { mappings, error } = updateLearnedMappingProperty(
+    profile.learnedMappings,
+    mappingId,
+    propertyId,
+    profile.properties,
+  );
+  if (error) {
+    throw new Error(error);
+  }
+
+  return updateProfile({ ...profile, learnedMappings: mappings });
 }

@@ -119,6 +119,37 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const profile = await profileStorage.deleteProperty(activeProfileId, propertyId);
       replaceProfile(profile);
     },
+    saveLearnedMapping: async (characteristic, propertyId, options) => {
+      if (!activeProfileId) {
+        throw new Error('Профиль не выбран.');
+      }
+      const result = await profileStorage.saveLearnedDocumentMapping(
+        activeProfileId,
+        characteristic,
+        propertyId,
+        options,
+      );
+      replaceProfile(result.profile);
+      return result.result;
+    },
+    removeLearnedMapping: async (mappingId) => {
+      if (!activeProfileId) {
+        throw new Error('Профиль не выбран.');
+      }
+      const profile = await profileStorage.removeLearnedDocumentMapping(activeProfileId, mappingId);
+      replaceProfile(profile);
+    },
+    changeLearnedMappingProperty: async (mappingId, propertyId) => {
+      if (!activeProfileId) {
+        throw new Error('Профиль не выбран.');
+      }
+      const profile = await profileStorage.changeLearnedMappingProperty(
+        activeProfileId,
+        mappingId,
+        propertyId,
+      );
+      replaceProfile(profile);
+    },
   };
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;

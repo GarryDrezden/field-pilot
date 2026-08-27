@@ -111,25 +111,35 @@ ExtractedCharacteristic → ProfileProperty
 
 ---
 
-## v0.5 — Review & Fill (CURRENT)
+## v0.5 — Review & Fill ✅
 
-- [ ] экран проверки соответствий
-- [ ] заполнение input / textarea / select
-- [ ] корректные input/change events
-- [ ] undo последнего fill
-- [ ] **никогда** auto-submit формы
+- [x] FillPlan + fill preview UI
+- [x] заполнение input / textarea / select
+- [x] корректные input/change events (native setter)
+- [x] undo последнего fill
+- [x] existing-value protection
+- [x] **никогда** auto-submit формы
 
----
+FillPlan только из `getFillReadyMatches()` — semantic matching не дублируется.
 
-## v0.6 — Learning
-
-- [ ] приоритет пользовательских mappings
-- [ ] управление / экспорт словаря соответствий
-- [ ] улучшение повторяющихся сценариев
+**Результат:** пользователь проверяет preview и заполняет выбранные безопасные поля; CMS save — вручную.
 
 ---
 
-## v0.7 — ChatGPT Bridge
+## v0.6 — Persistent Learning ✅
+
+- [x] explicit action «Запомнить соответствие» document term → ProfileProperty
+- [x] `LearnedDocumentMapping` in `chrome.storage.local` per profile
+- [x] приоритет learned mapping в matcher (выше alias/name/semantic)
+- [x] управление / экспорт / import словаря соответствий
+- [x] XLSX reimport сохраняет learned dictionary
+- [x] **без скрытого обучения** на automatic matches / fill / review confirm
+
+**Результат:** пользователь явно сохраняет терминологию документа для профиля; правила работают на любой странице без form scan.
+
+---
+
+## v0.7 — ChatGPT Bridge (CURRENT)
 
 - [ ] prompt + clipboard + import JSON ответа
 - [ ] без API key, без автоматизации chatgpt.com

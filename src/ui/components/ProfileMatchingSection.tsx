@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { findLearnedMappingByLabel, isSameLearnedRule } from '../../learning/learnedMappings';
 import { useDocument } from '../hooks/useDocument';
 import { useDocumentMatching } from '../hooks/useDocumentMatching';
 import { useProfiles } from '../hooks/useProfiles';
@@ -6,13 +7,14 @@ import {
   DocumentMatchRow,
   PropertyPicker,
 } from './DocumentMatchRow';
+import { LearnedMappingConflictDialog } from './LearnedMappingConflictDialog';
 import { formatCharacteristicValue, formatSourcePreview } from './matchRowUtils';
 
-type MatchFilter = 'all' | 'high' | 'review' | 'reject' | 'ignored';
+type MatchFilter = 'all' | 'high' | 'review' | 'reject' | 'ignored' | 'learned';
 
 export function ProfileMatchingSection() {
   const { extraction, matchReview, setReviewDecision, resetMatchReviewForProfile } = useDocument();
-  const { activeProfile } = useProfiles();
+  const { activeProfile, saveLearnedMapping } = useProfiles();
   const { effectiveMatches, stats } = useDocumentMatching(
     extraction?.characteristics,
     activeProfile,
@@ -22,6 +24,11 @@ export function ProfileMatchingSection() {
   const [filter, setFilter] = useState<MatchFilter>('all');
   const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
   const [pickerCharacteristicId, setPickerCharacteristicId] = useState<string | null>(null);
+  const [learnFeedback, setLearnFeedback] = useState<string | null>(null);
+  const [conflictState, setConflictState] = useState<{
+    characteristicId: string;
+    propertyId: string;
+  } | null>(null);
 
   useEffect(() => {
     if (activeProfile?.id) {
@@ -48,7 +55,10 @@ export function ProfileMatchingSection() {
   const filteredMatches = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('ru-RU');
     return effectiveMatches.filter((match) => {
-      if (filter !== 'all' && match.effectiveLevel !== filter) {
+      if (filter === 'learned' && !match.learnedMatch && !match.reasons.some((r) => r.code === 'user-learned')) {
+        return false;
+      }
+      if (filter !== 'all' && filter !== 'learned' && match.effectiveLevel !== filter) {
         return false;
       }
       const characteristic = characteristicById.get(match.characteristicId);
@@ -63,6 +73,59 @@ export function ProfileMatchingSection() {
       return haystack.includes(query);
     });
   }, [characteristicById, effectiveMatches, filter, propertyById, search]);
+
+  async function handleRemember(characteristicId: string, propertyId: string): Promise<void> {
+    const characteristic = characteristicById.get(characteristicId);
+    if (!characteristic || !activeProfile) {
+      return;
+    }
+
+    const result = await saveLearnedMapping(
+      {
+        sourceLabel: characteristic.sourceLabel,
+        rawUnit: characteristic.rawUnit,
+        normalizedUnit: characteristic.normalizedUnit,
+      },
+      propertyId,
+    );
+
+    if (result.status === 'conflict') {
+      setConflictState({ characteristicId, propertyId });
+      return;
+    }
+
+    const property = propertyById.get(propertyId);
+    if (result.status === 'already-saved') {
+      setLearnFeedback(`Уже сохранено: ${characteristic.sourceLabel} → ${property?.name ?? propertyId}`);
+    } else {
+      setLearnFeedback(`✓ Соответствие сохранено: ${characteristic.sourceLabel} → ${property?.name ?? propertyId}`);
+    }
+  }
+
+  async function handleReplaceConflict(): Promise<void> {
+    if (!conflictState) {
+      return;
+    }
+    const characteristic = characteristicById.get(conflictState.characteristicId);
+    if (!characteristic || !activeProfile) {
+      return;
+    }
+
+    const result = await saveLearnedMapping(
+      {
+        sourceLabel: characteristic.sourceLabel,
+        rawUnit: characteristic.rawUnit,
+        normalizedUnit: characteristic.normalizedUnit,
+      },
+      conflictState.propertyId,
+      { replace: true },
+    );
+    setConflictState(null);
+    const property = propertyById.get(conflictState.propertyId);
+    if (result.status === 'updated' || result.status === 'created') {
+      setLearnFeedback(`✓ Соответствие сохранено: ${characteristic.sourceLabel} → ${property?.name ?? conflictState.propertyId}`);
+    }
+  }
 
   if (!extraction) {
     return activeProfile ? (
@@ -107,6 +170,8 @@ export function ProfileMatchingSection() {
         {stats.ignored > 0 && <span>⚪ Пропущено: {stats.ignored}</span>}
       </div>
 
+      {learnFeedback && <p className="fp-status is-ready">{learnFeedback}</p>}
+
       <div className="fp-toolbar">
         <input
           className="fp-input"
@@ -124,6 +189,7 @@ export function ProfileMatchingSection() {
           <option value="review">🟡 Проверить</option>
           <option value="reject">🔴 Не найдено</option>
           <option value="ignored">⚪ Пропущено</option>
+          <option value="learned">🟢 Запомненные</option>
         </select>
       </div>
 
@@ -167,6 +233,31 @@ export function ProfileMatchingSection() {
               onIgnore={() =>
                 void setReviewDecision(activeProfile.id, match.characteristicId, { type: 'ignored' })
               }
+              onRemember={
+                match.effectivePropertyId
+                  ? () => void handleRemember(match.characteristicId, match.effectivePropertyId!)
+                  : undefined
+              }
+              rememberDisabled={
+                Boolean(
+                  match.effectivePropertyId &&
+                    isSameLearnedRule(
+                      activeProfile.learnedMappings,
+                      characteristic.sourceLabel,
+                      match.effectivePropertyId,
+                    ),
+                )
+              }
+              rememberLabel={
+                match.effectivePropertyId &&
+                isSameLearnedRule(
+                  activeProfile.learnedMappings,
+                  characteristic.sourceLabel,
+                  match.effectivePropertyId,
+                )
+                  ? 'Уже сохранено'
+                  : 'Запомнить соответствие'
+              }
             />
           );
         })}
@@ -187,6 +278,27 @@ export function ProfileMatchingSection() {
           }}
         />
       )}
+
+      {conflictState && activeProfile && (() => {
+        const characteristic = characteristicById.get(conflictState.characteristicId);
+        if (!characteristic) {
+          return null;
+        }
+        const existing = findLearnedMappingByLabel(activeProfile.learnedMappings, characteristic.sourceLabel);
+        if (!existing) {
+          return null;
+        }
+        return (
+          <LearnedMappingConflictDialog
+            sourceLabel={characteristic.sourceLabel}
+            existing={existing}
+            existingProperty={propertyById.get(existing.propertyId)}
+            newProperty={propertyById.get(conflictState.propertyId)}
+            onReplace={() => void handleReplaceConflict()}
+            onCancel={() => setConflictState(null)}
+          />
+        );
+      })()}
     </section>
   );
 }

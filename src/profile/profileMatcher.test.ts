@@ -38,6 +38,7 @@ const sampleProfile: FieldProfile = {
     { id: 'p3', name: 'Отсутствует на странице', aliases: [] },
   ],
   mappings: [],
+  learnedMappings: [],
 };
 
 describe('fieldSignature', () => {

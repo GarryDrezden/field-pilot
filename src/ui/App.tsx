@@ -7,10 +7,13 @@ import { DocumentCharacteristicsSection } from './components/DocumentCharacteris
 import { DocumentDebugSection } from './components/DocumentDebugSection';
 import { PageFieldsSection } from './components/PageFieldsSection';
 import { ProfileMatchingSection } from './components/ProfileMatchingSection';
+import { PageProvider } from './context/PageContext';
+import { FillSection } from './components/FillSection';
 import { ProfileBar, type PanelScreen } from './components/ProfileBar';
 import { ProfileManagePanel } from './components/ProfileManagePanel';
 import { ProfilePropertiesPanel } from './components/ProfilePropertiesPanel';
 import { ProfileImportPanel } from './components/ProfileImportPanel';
+import { LearnedDictionaryPanel } from './components/LearnedDictionaryPanel';
 import { useDocument } from './hooks/useDocument';
 import { useProfiles } from './hooks/useProfiles';
 
@@ -31,6 +34,7 @@ function MainScreen() {
       )}
       <ProfileMatchingSection />
       <PageFieldsSection />
+      <FillSection />
       <DocumentDebugSection />
     </>
   );
@@ -46,6 +50,9 @@ function AppContent({ screen, onOpenScreen }: { screen: PanelScreen; onOpenScree
   if (screen === 'profile-import') {
     return <ProfileImportPanel onBack={() => onOpenScreen('main')} />;
   }
+  if (screen === 'profile-learned') {
+    return <LearnedDictionaryPanel onBack={() => onOpenScreen('main')} />;
+  }
 
   return <MainScreen />;
 }
@@ -56,11 +63,13 @@ export function App({ onClose }: AppProps) {
   return (
     <ProfileProvider>
       <DocumentProvider>
-        <PanelHeader onClose={onClose} />
-        {screen === 'main' && <ProfileBar onOpenScreen={setScreen} />}
-        <main className="fp-content">
-          <AppContent screen={screen} onOpenScreen={setScreen} />
-        </main>
+        <PageProvider>
+          <PanelHeader onClose={onClose} />
+          {screen === 'main' && <ProfileBar onOpenScreen={setScreen} />}
+          <main className="fp-content">
+            <AppContent screen={screen} onOpenScreen={setScreen} />
+          </main>
+        </PageProvider>
       </DocumentProvider>
     </ProfileProvider>
   );

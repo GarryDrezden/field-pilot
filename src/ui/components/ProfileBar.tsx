@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useProfiles } from '../hooks/useProfiles';
 
-export type PanelScreen = 'main' | 'profile-manage' | 'profile-properties' | 'profile-import';
+export type PanelScreen = 'main' | 'profile-manage' | 'profile-properties' | 'profile-import' | 'profile-learned';
 
 interface ProfileBarProps {
   onOpenScreen: (screen: PanelScreen) => void;
@@ -97,6 +97,9 @@ export function ProfileBar({ onOpenScreen }: ProfileBarProps) {
         <div className="fp-profile-links">
           <button type="button" className="fp-link-button" onClick={() => onOpenScreen('profile-properties')}>
             Свойства профиля ({activeProfile.properties.length})
+          </button>
+          <button type="button" className="fp-link-button" onClick={() => onOpenScreen('profile-learned')}>
+            Словарь соответствий ({activeProfile.learnedMappings.length})
           </button>
           <button type="button" className="fp-link-button" onClick={() => onOpenScreen('profile-import')}>
             Импорт

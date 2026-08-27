@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ProfileProperty } from '../../profile/profileTypes';
 import type { EffectiveDocumentMatch } from '../../matching/types';
-import { formatConfidence, formatMatchReasons, levelIcon } from '../../matching/formatMatchReasons';
+import { formatConfidence, formatMatchReasons, isLearnedUserMatch, levelIcon } from '../../matching/formatMatchReasons';
 
 interface PropertyPickerProps {
   properties: ProfileProperty[];
@@ -67,6 +67,9 @@ interface DocumentMatchRowProps {
   onConfirm: () => void;
   onManual: () => void;
   onIgnore: () => void;
+  onRemember?: () => void;
+  rememberDisabled?: boolean;
+  rememberLabel?: string;
   onToggleSource: () => void;
   sourceExpanded: boolean;
 }
@@ -81,16 +84,23 @@ export function DocumentMatchRow({
   onConfirm,
   onManual,
   onIgnore,
+  onRemember,
+  rememberDisabled,
+  rememberLabel = 'Запомнить соответствие',
   onToggleSource,
   sourceExpanded,
 }: DocumentMatchRowProps) {
   const reasons = formatMatchReasons(match.reasons).slice(0, 4);
+  const learned = isLearnedUserMatch(match);
 
   return (
     <li className="fp-match-row">
       <div className="fp-match-row-head">
         <span className="fp-match-level">{levelIcon(match.effectiveLevel)}</span>
-        {match.effectiveLevel !== 'ignored' && match.confidence > 0 && (
+        {match.effectiveLevel !== 'ignored' && learned && match.effectiveLevel === 'high' && (
+          <span className="fp-match-confidence fp-match-learned">Запомнено</span>
+        )}
+        {match.effectiveLevel !== 'ignored' && !learned && match.confidence > 0 && (
           <span className="fp-match-confidence">{formatConfidence(match.confidence)}</span>
         )}
         <span className="fp-match-doc-label">{characteristicLabel}</span>
@@ -136,6 +146,16 @@ export function DocumentMatchRow({
         {match.effectiveLevel !== 'ignored' && (
           <button type="button" className="fp-link-button" onClick={onIgnore}>
             Не использовать
+          </button>
+        )}
+        {property && match.effectiveLevel !== 'ignored' && onRemember && (
+          <button
+            type="button"
+            className="fp-button fp-button-secondary"
+            onClick={onRemember}
+            disabled={rememberDisabled}
+          >
+            {rememberLabel}
           </button>
         )}
       </div>

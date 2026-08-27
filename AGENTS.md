@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.4.0 (Document → Profile Matching)  
-**Milestone:** локальное сопоставление ExtractedCharacteristic ↔ ProfileProperty с confidence и manual review.
+**Версия:** v0.6.0 (Persistent Learning)  
+**Milestone:** явное сохранение document terminology → ProfileProperty per profile.
 
 ### Что уже работает
 
@@ -23,15 +23,15 @@
 - **Reimport по externalId** — mappings сохраняются при обновлении каталога
 - **Exact matching profile ↔ page:** saved mapping, exact label, exact alias
 - **PageFieldSignature** для восстановления связей на новой странице
-- UI: документ → **сопоставление с профилем** (🟢🟡🔴) → текущая страница (scan)
+- UI: документ → **сопоставление с профилем** (🟢🟡🔴) → текущая страница → **fill preview**
 - **Document → Profile matching:** RU/EN lexicon, unit-aware scoring, manual review
-- Unit-тесты: extraction, session, matching, scanner, profile import/matcher
+- **Fill engine:** FillPlan, preview, safe write, select, existing-value protection, undo
+- **Persistent learning:** `LearnedDocumentMapping`, «Запомнить соответствие», словарь правил
+- Unit-тесты: extraction, session, matching, fill, learning, scanner, profile import/matcher
 
 ### Что НЕ реализовано (не начинать без запроса)
 
-- Заполнение полей (v0.5)
-- Persistent learning / auto aliases (v0.6)
-- Fuzzy / AI / OCR / ChatGPT Bridge
+- Fuzzy / AI / OCR / ChatGPT Bridge (v0.7+)
 - Bitrix-specific / site-specific код
 
 ---
@@ -56,9 +56,10 @@ PDF/DOCX → ExtractedCharacteristic[] → ProfileProperty[] → (optional) Page
 
 | Слой | Где хранится |
 |------|----------------|
-| Profiles, mappings, settings | `chrome.storage.local` |
+| Profiles, mappings, **learnedMappings**, settings | `chrome.storage.local` |
+| Review decisions (session) | `chrome.storage.session` |
 | Текущий document session (meta + characteristics) | `chrome.storage.session` |
-| PageFields, fullText после navigation | runtime memory only |
+| PageFields, FillPlan, Undo | runtime memory only |
 
 ```text
 src/
@@ -69,6 +70,8 @@ src/
   extraction/       characteristic extraction from documents
   session/          document session (chrome.storage.session)
   matching/         matchDocumentToProfile, review, collisions
+  learning/         LearnedDocumentMapping CRUD + matcher integration
+  fill/             buildFillPlan, executeFill, undo, DOM adapter
   form/             formScanner, labelResolver
   profile/          storage, import, export, matcher, fieldSignature
   shared/           types, utils
@@ -81,6 +84,14 @@ src/
 **PDF.js:** worker копируется в dist, `GlobalWorkerOptions.workerSrc` задаётся в `setupPdfjs.ts`, worker в `web_accessible_resources`.
 
 **Permissions:** только `activeTab`, `scripting`, `storage`. Без `<all_urls>` host permission.
+
+**Hard rules (v0.6+):**
+
+1. Document workspace is **page-independent** — matching/learning без FormScanner
+2. Learned mapping = document label → ProfileProperty; **never** document → DOM
+3. Learning only on explicit «Запомнить соответствие» — no hidden learning from fill/review/HIGH
+4. No navigation auto-scan; no FillPlan/DOM writes without explicit user actions
+5. Fill never auto-submits; existing field values never overwritten by default
 
 ---
 
@@ -97,6 +108,12 @@ src/
 | `src/matching/matchDocumentToProfile.ts` | Document ↔ Profile matcher |
 | `src/matching/canonicalizeLabel.ts` | RU/EN technical lexicon |
 | `src/matching/applyReviewDecisions.ts` | Session review + fill-ready selector |
+| `src/learning/learnedMappings.ts` | Learned mapping domain + upsert/replace |
+| `src/learning/applyLearnedMatch.ts` | Learned priority in matcher |
+| `src/ui/components/LearnedDictionaryPanel.tsx` | Management UI словаря |
+| `src/fill/executeFill.ts` | DOM write + verify + undo batch |
+| `src/fill/setFieldValue.ts` | native setter + input/change events |
+| `src/ui/components/FillSection.tsx` | Fill preview / execute / undo UI |
 | `src/profile/profileXlsxImport.ts` | XLSX parse (SheetJS) |
 | `src/profile/profileImport.ts` | Column mapping, catalog merge by externalId |
 | `src/profile/profileStorage.ts` | chrome.storage.local, CRUD профилей |
@@ -131,7 +148,8 @@ Load unpacked: папка **`dist/`**
 - PDF без text layer → предупреждение, OCR позже
 - checkbox/radio не сканируются
 - `content.js` ~1.47 MB (pdfjs + mammoth + React + xlsx + extraction)
-- Fill полей не реализован (v0.5)
+- Fill полей работает только для fill-ready matches; **никакого auto-submit**
+- Learning только explicit («Запомнить соответствие»); confirm/fill не создают правила
 - Без `storage.session` document session не переживает navigation (graceful fallback)
 - fullText документа не сохраняется в session — только source.text у каждой characteristic
 - Только exact matching (без fuzzy)
@@ -218,6 +236,22 @@ Load unpacked: папка **`dist/`**
 - Conservative prose rejection; structured lines с `Max.` abbreviations
 - HARSLE PB-2000 PDF acceptance: 29 candidates, key technical params found
 - Tests: 55 total (+27); bundle ~1473 KB (+~14 KB vs v0.2.0)
+
+### 2026-08-27 — v0.6.0 Persistent Learning
+
+- `LearnedDocumentMapping` in `FieldProfile.learnedMappings` (`chrome.storage.local`, schema v2)
+- `src/learning/*` — upsert/replace/delete, matcher priority, unit-conflict guard
+- UI: «Запомнить соответствие», conflict replace dialog, «Словарь соответствий»
+- Export/import profile v2 includes learned mappings; XLSX reimport preserves rules
+- Tests: 136 total (+16 learning)
+
+### 2026-08-27 — v0.5.0 Review & Fill
+
+- `src/fill/*` — FillPlan, buildFillValue, executeFill, undo, select resolver
+- UI: FillSection preview/execute, existing-value protection, «Настроить поле»
+- PageContext — shared scan state для Current Page + Fill
+- Tests: fill value, plan, select, DOM setter, undo (+23)
+- Bundle: `content.js` ~1527 KB (+~21 KB vs v0.4.0)
 
 ### 2026-08-27 — v0.4.0 Document → Profile Matching
 

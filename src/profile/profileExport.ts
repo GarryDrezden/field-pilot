@@ -1,6 +1,8 @@
+import { sanitizeImportedLearnedMappings } from '../learning/learnedMappings';
 import type {
   FieldProfile,
   ImportedPropertyDraft,
+  LearnedDocumentMapping,
   ProfileProperty,
   PropertyPageMapping,
 } from './profileTypes';
@@ -26,6 +28,7 @@ export interface ProfileExportPayload {
       sourceIndex?: number;
     }>;
     mappings: PropertyPageMapping[];
+    learnedMappings?: LearnedDocumentMapping[];
   };
 }
 
@@ -46,6 +49,7 @@ export function exportProfile(profile: FieldProfile): ProfileExportPayload {
         sourceIndex: property.sourceIndex,
       })),
       mappings: profile.mappings,
+      learnedMappings: profile.learnedMappings,
     },
   };
 }
@@ -58,6 +62,7 @@ export interface ImportedProfileBundle {
   name: string;
   properties: Array<ImportedPropertyDraft & { id?: string }>;
   mappings: PropertyPageMapping[];
+  learnedMappings: LearnedDocumentMapping[];
 }
 
 export function parseProfileExport(raw: unknown): ImportedProfileBundle {
@@ -84,6 +89,7 @@ export function parseProfileExport(raw: unknown): ImportedProfileBundle {
         sourceIndex: property.sourceIndex,
       })),
       mappings: payload.profile.mappings ?? [],
+      learnedMappings: payload.profile.learnedMappings ?? [],
     };
   }
 
@@ -95,6 +101,9 @@ export function parseProfileExport(raw: unknown): ImportedProfileBundle {
         aliases: property.aliases ?? [],
       })),
       mappings: Array.isArray(payload.mappings) ? (payload.mappings as PropertyPageMapping[]) : [],
+      learnedMappings: Array.isArray((payload as { learnedMappings?: unknown }).learnedMappings)
+        ? ((payload as { learnedMappings: LearnedDocumentMapping[] }).learnedMappings ?? [])
+        : [],
     };
   }
 
@@ -138,6 +147,14 @@ export function buildProfileFromImport(
     })
     .filter((mapping): mapping is PropertyPageMapping => mapping !== null);
 
+  const learnedMappings = sanitizeImportedLearnedMappings(
+    bundle.learnedMappings.map((mapping) => ({
+      ...mapping,
+      propertyId: propertyIdMap.get(mapping.propertyId) ?? mapping.propertyId,
+    })),
+    properties,
+  );
+
   return {
     id: createId(),
     name: bundle.name,
@@ -145,6 +162,7 @@ export function buildProfileFromImport(
     updatedAt: now,
     properties,
     mappings,
+    learnedMappings,
   };
 }
 

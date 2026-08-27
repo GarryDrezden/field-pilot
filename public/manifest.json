@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FieldPilot",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "Extracts data from PDF and DOCX locally in your browser to help fill web forms. No cloud, no auto-submit.",
   "permissions": ["activeTab", "scripting", "storage"],
   "background": {

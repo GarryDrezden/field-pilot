@@ -14,7 +14,11 @@ export function useDocumentMatching(
     if (!characteristics?.length || !activeProfile?.properties.length) {
       return null;
     }
-    return matchDocumentToProfile(characteristics, activeProfile.properties);
+    return matchDocumentToProfile(
+      characteristics,
+      activeProfile.properties,
+      activeProfile.learnedMappings ?? [],
+    );
   }, [characteristics, activeProfile]);
 
   const effectiveMatches = useMemo<EffectiveDocumentMatch[]>(() => {

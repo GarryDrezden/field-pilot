@@ -19,6 +19,8 @@ export type MatchReasonCode =
   | 'manual-override'
   | 'confirmed-by-user'
   | 'ignored-by-user'
+  | 'user-learned'
+  | 'learned-unit-conflict'
   | 'no-candidate';
 
 export interface MatchReason {
@@ -52,6 +54,7 @@ export interface DocumentPropertyMatch {
   automaticPropertyId?: string;
   automaticLevel?: MatchLevel;
   automaticConfidence?: number;
+  learnedMatch?: boolean;
 }
 
 export interface DocumentProfileMatchingResult {

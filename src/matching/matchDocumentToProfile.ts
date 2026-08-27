@@ -5,9 +5,10 @@ import {
   MAX_ALTERNATIVES,
 } from './constants';
 import { detectAutomaticTargetCollisions } from './detectTargetCollisions';
+import { buildLearnedIndexFromProfile, tryLearnedDocumentMatch } from '../learning/applyLearnedMatch';
 import { indexCharacteristic, indexProperty, scoreCandidatePair } from './scoreCandidate';
 import type { ExtractedCharacteristic } from '../extraction/types';
-import type { ProfileProperty } from '../profile/profileTypes';
+import type { LearnedDocumentMapping, ProfileProperty } from '../profile/profileTypes';
 import type {
   DocumentProfileMatchingResult,
   DocumentPropertyMatch,
@@ -19,10 +20,17 @@ import type {
 export function matchDocumentToProfile(
   characteristics: ExtractedCharacteristic[],
   properties: ProfileProperty[],
+  learnedMappings: LearnedDocumentMapping[] = [],
 ): DocumentProfileMatchingResult {
   const indexedProperties = properties.map(indexProperty);
+  const learnedIndex = buildLearnedIndexFromProfile(learnedMappings);
   const matches = characteristics.map((characteristic) =>
-    matchSingleCharacteristic(indexCharacteristic(characteristic), indexedProperties),
+    matchSingleCharacteristic(
+      indexCharacteristic(characteristic),
+      indexedProperties,
+      characteristic,
+      learnedIndex,
+    ),
   );
 
   detectAutomaticTargetCollisions(matches, characteristics);
@@ -42,7 +50,14 @@ export function matchDocumentToProfile(
 function matchSingleCharacteristic(
   source: ReturnType<typeof indexCharacteristic>,
   indexedProperties: ReturnType<typeof indexProperty>[],
+  characteristic: ExtractedCharacteristic,
+  learnedIndex: Map<string, LearnedDocumentMapping>,
 ): DocumentPropertyMatch {
+  const learnedMatch = tryLearnedDocumentMatch(characteristic, indexedProperties.map((item) => item.property), learnedIndex);
+  if (learnedMatch) {
+    return learnedMatch;
+  }
+
   const exactNameMatches = indexedProperties.filter(
     (property) => property.normalizedName === source.normalizedLabel,
   );

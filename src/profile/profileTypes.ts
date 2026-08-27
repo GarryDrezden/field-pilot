@@ -1,8 +1,8 @@
 import type { FormElementType } from '../shared/types/form';
 
-export const STORAGE_SCHEMA_VERSION = 1;
+export const STORAGE_SCHEMA_VERSION = 2;
 export const PROFILE_EXPORT_FORMAT = 'fieldpilot-profile';
-export const PROFILE_EXPORT_VERSION = 1;
+export const PROFILE_EXPORT_VERSION = 2;
 
 export interface PageFieldSignature {
   elementType: FormElementType;
@@ -30,6 +30,16 @@ export interface PropertyPageMapping {
   updatedAt?: string;
 }
 
+export interface LearnedDocumentMapping {
+  id: string;
+  sourceLabel: string;
+  normalizedSourceLabel: string;
+  sourceUnit?: string;
+  propertyId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FieldProfile {
   id: string;
   name: string;
@@ -37,6 +47,7 @@ export interface FieldProfile {
   updatedAt: string;
   properties: ProfileProperty[];
   mappings: PropertyPageMapping[];
+  learnedMappings: LearnedDocumentMapping[];
 }
 
 export interface ProfileStorageState {

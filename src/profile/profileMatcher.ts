@@ -124,3 +124,12 @@ export function findExactLabelField(fields: FormField[], label: string): FormFie
   const indexes = buildFieldIndexes(fields);
   return findUniqueExactLabelMatch(label, indexes.byNormalizedLabel);
 }
+
+export function resolvePropertyPageField(
+  profile: FieldProfile,
+  property: ProfileProperty,
+  fields: FormField[],
+): PropertyMappingRow {
+  const indexes = buildFieldIndexes(fields);
+  return matchSingleProperty(profile, property, fields, indexes);
+}

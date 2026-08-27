@@ -7,6 +7,7 @@ import { useProfiles } from '../hooks/useProfiles';
 interface MappingsSectionProps {
   fields: FormField[];
   compact?: boolean;
+  highlightPropertyId?: string | null;
 }
 
 function matchSourceLabel(source: ProfileMatchSummary['rows'][number]['matchSource']): string {
@@ -22,7 +23,7 @@ function matchSourceLabel(source: ProfileMatchSummary['rows'][number]['matchSour
   }
 }
 
-export function MappingsSection({ fields, compact = false }: MappingsSectionProps) {
+export function MappingsSection({ fields, compact = false, highlightPropertyId = null }: MappingsSectionProps) {
   const { activeProfile, saveMapping } = useProfiles();
   const [filter, setFilter] = useState<MappingFilter>('all');
   const [search, setSearch] = useState('');
@@ -121,7 +122,10 @@ export function MappingsSection({ fields, compact = false }: MappingsSectionProp
 
       <ul className="fp-mapping-list">
         {filteredRows.map((row) => (
-          <li key={row.property.id} className="fp-mapping-item">
+          <li
+            key={row.property.id}
+            className={`fp-mapping-item${highlightPropertyId === row.property.id ? ' is-highlighted' : ''}`}
+          >
             <div className="fp-mapping-property">
               <div>{row.property.name}</div>
               {row.property.externalId && <div className="fp-property-code">{row.property.externalId}</div>}

@@ -14,9 +14,11 @@ FieldPilot разбирает технический документ **неза
 
 FieldPilot сокращает ручной перенос характеристик до pipeline:
 
-**загрузить документ → проверить характеристики → (опционально) сопоставить с профилем → (опционально) заполнить форму на нужной странице.**
+**на любой обычной web-странице:** загрузить документ → проверить характеристики → сопоставить с профилем → (опционально) запомнить терминологию
 
-Анализ документа не требует открытой формы. Профиль — каталог целевых свойств. Веб-страница — только место назначения для уже разобранных значений.
+**на странице с формой:** просканировать поля → preview → заполнить выбранные → **сохранить форму в CMS вручную**
+
+Анализ документа **не требует** открытой карточки товара или формы. Профиль — каталог целевых свойств. Веб-страница — только место назначения для уже разобранных значений.
 
 ## Profile (профиль)
 
@@ -56,6 +58,22 @@ FieldPilot автоматически распознаёт колонки:
 
 При повторном импорте того же каталога свойства сопоставляются по **`externalId`**, а не по названию — внутренние ID и mappings сохраняются. Одинаковые названия с разными `externalId` (например PARAM2226 и PARAM2248) остаются разными свойствами.
 
+### v0.6 — Persistent Learning
+
+- `LearnedDocumentMapping`: explicit document term → ProfileProperty (per profile)
+- «Запомнить соответствие» — отдельно от session confirm
+- Словарь соответствий: поиск, удаление, смена свойства
+- Learned rules имеют **наивысший приоритет** в matcher
+- Export/import JSON v2; XLSX reimport **не удаляет** learned dictionary
+- **Без скрытого обучения** — fill/review/HIGH не создают правила
+
+### v0.5 — Review & Fill
+
+- FillPlan из fill-ready matches + profile→page exact mapping
+- Fill preview, existing-value protection, explicit overwrite
+- Safe DOM write (input/textarea/select) + runtime undo
+- **Без auto-submit** — пользователь сохраняет форму в CMS вручную
+
 ### v0.4 — Document → Profile Matching
 
 - Локальный deterministic matcher (`matchDocumentToProfile`) без AI/LLM
@@ -92,7 +110,8 @@ ProfileProperty matching      ✅ v0.4
    ↓
 PageField (optional)          ✅ v0.2
    ↓
-Fill                          ⏳ v0.5
+Fill Preview + Fill           ✅ v0.5
+USER SAVE (manual)            обязательно вручную
 ```
 
 **Сейчас работают:**
@@ -102,12 +121,12 @@ Fill                          ⏳ v0.5
 - **document → profile matching with review** (v0.4)
 - profile property ↔ page field exact matching (v0.2)
 - document session persistence (v0.3.1)
+- **fill preview + safe field write + undo** (v0.5) — **без auto-submit**
 
-**Следующий шаг:** fill подтверждённых matches (v0.5).
+FieldPilot **не отправляет форму и не сохраняет изменения автоматически**. После fill пользователь сам нажимает Save/Apply в CMS.
 
 ## Что запланировано
 
-- Безопасное заполнение выбранных полей без auto-submit (v0.5)
 - Persistent learning на явных user-confirmed mappings (v0.6)
 - ChatGPT Bridge без собственного API (v0.7)
 - OCR и сложные документы (v0.8)
@@ -176,7 +195,8 @@ Profile Matching            ← v0.4
     ↓
 PageField (optional scan)   ← v0.2
     ↓
-Review & Fill               ← v0.5
+Review & Fill               ✅ v0.5
+USER SAVE                 manual only
 ```
 
 Структура проекта:

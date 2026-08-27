@@ -36,6 +36,17 @@ const sampleProfile: FieldProfile = {
       createdAt: '2026-01-01T00:00:00.000Z',
     },
   ],
+  learnedMappings: [
+    {
+      id: 'learn-1',
+      sourceLabel: 'Motor Power',
+      normalizedSourceLabel: 'motor power',
+      sourceUnit: 'kW',
+      propertyId: 'prop-1',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ],
 };
 
 describe('profileExport', () => {
@@ -50,12 +61,15 @@ describe('profileExport', () => {
     expect(imported.properties[0]?.sourceOrder).toBe(2140);
     expect(imported.mappings).toHaveLength(1);
     expect(imported.mappings[0]?.propertyId).toBe(imported.properties[0]?.id);
+    expect(imported.learnedMappings).toHaveLength(1);
+    expect(imported.learnedMappings[0]?.sourceLabel).toBe('Motor Power');
   });
 
   it('exports fieldpilot format identifier', () => {
     const payload = exportProfile(sampleProfile);
     expect(payload.format).toBe('fieldpilot-profile');
-    expect(payload.version).toBe(1);
+    expect(payload.version).toBe(2);
+    expect(payload.profile.learnedMappings).toHaveLength(1);
   });
 });
 

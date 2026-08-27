@@ -16,6 +16,8 @@ const REASON_LABELS: Partial<Record<MatchReason['code'], string>> = {
   'manual-override': 'Выбрано пользователем вручную',
   'confirmed-by-user': 'Подтверждено пользователем',
   'ignored-by-user': 'Пропущено пользователем',
+  'user-learned': 'Соответствие ранее сохранено пользователем',
+  'learned-unit-conflict': 'Единицы измерения конфликтуют с сохранённым правилом',
   'no-candidate': 'Подходящее свойство не найдено',
 };
 
@@ -52,4 +54,21 @@ export function levelIcon(level: string): string {
 
 export function formatConfidence(confidence: number): string {
   return `${Math.round(confidence * 100)}%`;
+}
+
+export function isLearnedUserMatch(match: { learnedMatch?: boolean; reasons: MatchReason[] }): boolean {
+  return Boolean(match.learnedMatch) || match.reasons.some((reason) => reason.code === 'user-learned');
+}
+
+export function formatMatchLevelLabel(
+  level: string,
+  match: { learnedMatch?: boolean; reasons: MatchReason[]; confidence: number },
+): string {
+  if (level === 'high' && isLearnedUserMatch(match)) {
+    return 'Запомнено';
+  }
+  if (level === 'high') {
+    return formatConfidence(match.confidence);
+  }
+  return levelIcon(level);
 }
