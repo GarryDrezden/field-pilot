@@ -8,14 +8,16 @@
 
 ## Текущий статус
 
-**Версия:** v0.7.0 (ChatGPT Bridge)  
-**Milestone:** manual AI-assisted document→profile matching via clipboard.
+**Версия:** v0.8.0 (OCR & Complex Documents)  
+**Milestone:** local OCR fallback for scanned/hybrid PDF + layout improvements.
 
 ### Что уже работает
 
 - Manifest V3, Chrome + Opera (Chromium)
 - Панель по клику на иконку (Shadow DOM, 440px справа)
 - Загрузка PDF / DOCX, локальный парсинг **на любой странице** (форма не обязательна)
+- **PDF:** native text fast path + **optional local OCR** (Tesseract.js, lazy-loaded, eng+rus)
+- Page-level text quality; explicit OCR for weak/empty pages only
 - **Document → ExtractedCharacteristic** без зависимости от `scanPage()`
 - **Document session:** `chrome.storage.session` — characteristics сохраняются между навигациями
 - Form Scanner: input, textarea, select + label resolver (опциональный слой)
@@ -28,11 +30,11 @@
 - **Fill engine:** FillPlan, preview, safe write, select, existing-value protection, undo
 - **Persistent learning:** `LearnedDocumentMapping`, «Запомнить соответствие», словарь правил
 - **ChatGPT Bridge:** manual prompt copy + JSON paste, validation, preview (no API/automation)
-- Unit-тесты: extraction, session, matching, fill, learning, bridge, scanner, profile import/matcher
+- Unit-тесты: extraction, session, matching, fill, learning, bridge, OCR domain, scanner, profile import/matcher
 
 ### Что НЕ реализовано (не начинать без запроса)
 
-- Fuzzy local matching / OCR (v0.8+)
+- Fuzzy local matching (v0.9+)
 - OpenAI API integration
 - Bitrix-specific / site-specific код
 
@@ -96,6 +98,15 @@ src/
 4. No navigation auto-scan; no FillPlan/DOM writes without explicit user actions
 5. Fill never auto-submits; existing field values never overwritten by default
 
+**Hard rules (v0.8+ OCR):**
+
+1. OCR is document-layer only — never touches Current Page / PageField / Fill
+2. OCR is fallback/manual — no auto-OCR on good native PDFs (HARSLE fast path)
+3. No cloud OCR / no CDN / all assets extension-local and offline
+4. OCR result re-enters normal pipeline: `DocumentParseResult` → `extractCharacteristics()`
+5. OCR does not semantic-match; provenance via `source.origin`
+6. OCR engine lazy-loaded (`dist/ocr/ocrEngine.js`) — not in main `content.js` bundle
+
 ---
 
 ## Ключевые файлы
@@ -104,7 +115,11 @@ src/
 |------|------------|
 | `src/background/index.ts` | Клик по иконке, inject, проверка restricted URL |
 | `src/content/index.tsx` | Shadow DOM + React mount |
-| `src/document/pdf/reconstructPdfLines.ts` | PDF visual line reconstruction |
+| `src/document/pdf/analyzePageTextQuality.ts` | Per-page PDF text quality heuristics |
+| `src/document/executeDocumentOcr.ts` | OCR batch orchestration + stale document guard |
+| `src/ocr/tesseract/tesseractOcrEngine.ts` | Tesseract.js adapter (lazy bundle entry) |
+| `src/ui/components/DocumentOcrSection.tsx` | OCR UI (progress, language, explicit run) |
+| `vite.ocr.config.ts` | Separate ES build → `dist/ocr/ocrEngine.js` |
 | `src/extraction/extractCharacteristics.ts` | Document → ExtractedCharacteristic |
 | `src/session/documentSessionStorage.ts` | Document session в chrome.storage.session |
 | `src/ui/context/DocumentContext.tsx` | React state документа + session restore |
@@ -275,6 +290,18 @@ Load unpacked: папка **`dist/`**
 - DocumentSession v2: review decisions в `chrome.storage.session`
 - Tests: canonicalization, matcher safety, review decisions, HARSLE matching (+27)
 - Bundle: `content.js` ~1506 KB (+~27 KB vs v0.3.1)
+
+### 2026-08-27 — v0.8.0 OCR & Complex Documents
+
+- Page-level text quality (`good` / `weak` / `empty`) + PDF diagnostics UI
+- Local OCR via Tesseract.js (lazy `dist/ocr/`, eng+rus, offline, explicit user action)
+- Hybrid PDF: native text on good pages, OCR merge + re-extraction on problem pages
+- `CharacteristicSource.origin` (`pdf-text`, `ocr`, `docx-table`, …)
+- PDF layout: geometry-aware spacing, conservative multi-column split
+- DOCX tables: colspan, repeated header rows
+- DocumentSession schema v4 (`pdfDiagnostics` summary)
+- Tests: 154 total; HARSLE native path unchanged (28 characteristics)
+- Bundle: `content.js` ~1571 KB; OCR assets ~34 MB in extension package (lazy-loaded)
 
 ### 2026-08-27 — v0.3.1 Document Workspace / Session
 

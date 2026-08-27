@@ -151,17 +151,24 @@ FillPlan только из `getFillReadyMatches()` — semantic matching не д
 
 ---
 
-## v0.8 — Difficult Documents (CURRENT)
+## v0.8 — OCR & Complex Documents ✅
 
-- [ ] OCR для scanned PDF
-- [ ] улучшенные таблицы, сложная вёрстка документов
+- [x] page-level text quality (`good` / `weak` / `empty`)
+- [x] explicit local OCR fallback (Tesseract.js, lazy-loaded, eng+rus)
+- [x] hybrid PDF: native text on good pages, OCR only on problem pages
+- [x] OCR progress / cancel / language preset
+- [x] provenance `source.origin = ocr`
+- [x] PDF layout: geometry-aware spacing, conservative multi-column split
+- [x] DOCX table improvements (colspan, headers)
+
+**Результат:** scanned and hybrid PDFs supported without breaking HARSLE fast path; OCR is document-layer only.
 
 ---
 
-## v0.9 — Compatibility / UX
+## v0.9 — Compatibility & UX (CURRENT)
 
-- [ ] SPA, dynamic forms, iframe investigation
-- [ ] diagnostics, performance, keyboard navigation
+- [ ] real-world CMS compatibility, SPA/framework forms
+- [ ] UX polish, error recovery, performance, browser compatibility
 
 ---
 

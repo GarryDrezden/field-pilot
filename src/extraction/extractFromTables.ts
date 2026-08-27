@@ -1,11 +1,12 @@
 import { normalizeUnit } from './normalizeUnit';
 import { parseCharacteristicValue } from './parseValue';
 import { isLikelyHeaderRow, isValidCharacteristicLabel } from './proseDetection';
-import type { ExtractionCandidateDraft } from './types';
+import type { CharacteristicSourceOrigin, ExtractionCandidateDraft } from './types';
 
 export function extractFromTableRows(
   rows: string[][],
   tableIndex: number,
+  origin: CharacteristicSourceOrigin = 'docx-table',
 ): ExtractionCandidateDraft[] {
   const candidates: ExtractionCandidateDraft[] = [];
 
@@ -15,7 +16,7 @@ export function extractFromTableRows(
       return;
     }
 
-    const draft = rowToCandidate(cells, tableIndex, rowIndex);
+    const draft = rowToCandidate(cells, tableIndex, rowIndex, origin);
     if (draft) {
       candidates.push(draft);
     }
@@ -28,6 +29,7 @@ function rowToCandidate(
   cells: string[],
   tableIndex: number,
   rowIndex: number,
+  origin: CharacteristicSourceOrigin,
 ): ExtractionCandidateDraft | null {
   const sourceText = cells.join(' | ');
 
@@ -40,6 +42,7 @@ function rowToCandidate(
       text: sourceText,
       tableIndex,
       rowIndex,
+      origin,
     });
   }
 
@@ -55,12 +58,14 @@ function rowToCandidate(
           text: sourceText,
           tableIndex,
           rowIndex,
+          origin,
         });
       }
       return buildCandidate(second, third, undefined, 'table-row', {
         text: sourceText,
         tableIndex,
         rowIndex,
+        origin,
       });
     }
 
@@ -72,6 +77,7 @@ function rowToCandidate(
       text: sourceText,
       tableIndex,
       rowIndex,
+      origin,
     });
   }
 
@@ -90,6 +96,7 @@ function rowToCandidate(
       text: sourceText,
       tableIndex,
       rowIndex,
+      origin,
     });
   }
 

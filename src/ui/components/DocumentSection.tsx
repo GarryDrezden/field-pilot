@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { formatFileSize } from '../../shared/utils';
 import { useDocument } from '../hooks/useDocument';
+import { DocumentOcrSection } from './DocumentOcrSection';
 
 export function DocumentSection() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -15,8 +16,15 @@ export function DocumentSection() {
     errorMessage,
     extractionError,
     parseWarnings,
+    pdfDiagnostics,
+    ocrJob,
+    ocrLanguage,
+    canRunOcr,
     loadFile,
     clearDocument,
+    runOcrForProblemPages,
+    cancelOcr,
+    setOcrLanguage,
     restoredFromSession,
     sessionPersistError,
   } = useDocument();
@@ -127,6 +135,17 @@ export function DocumentSection() {
                 Очистить документ
               </button>
             </div>
+            <DocumentOcrSection
+              fileType={fileMeta.type}
+              pdfDiagnostics={pdfDiagnostics}
+              ocrJob={ocrJob}
+              ocrLanguage={ocrLanguage}
+              canRunOcr={canRunOcr}
+              restoredFromSession={restoredFromSession}
+              onRunProblemPages={() => void runOcrForProblemPages()}
+              onCancel={cancelOcr}
+              onLanguageChange={setOcrLanguage}
+            />
           </div>
         )
       )}

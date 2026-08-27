@@ -1,15 +1,20 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { startBridgeRequest } from '../../bridge/chatgpt/bridgeSession';
 import type { ChatGptBridgeScope } from '../../bridge/chatgpt/types';
 import { EMPTY_BRIDGE_SESSION } from '../../bridge/chatgpt/types';
+import { executeDocumentOcr, toSessionPdfDiagnostics } from '../../document/executeDocumentOcr';
 import { parseDocumentFile } from '../../document/parseDocument';
 import { extractCharacteristics } from '../../extraction/extractCharacteristics';
 import type { ExtractionResult } from '../../extraction/types';
+import { createLazyOcrEngine } from '../../ocr/loadOcrEngine';
+import type { OcrLanguagePreset } from '../../ocr/types';
+import { pruneReviewDecisionsForCharacteristics } from '../../matching/pruneReviewDecisions';
 import {
   createEmptyReviewState,
   upsertReviewDecision,
@@ -24,9 +29,10 @@ import {
   saveDocumentSession,
   type BuildDocumentSessionOptions,
 } from '../../session/documentSessionStorage';
-import type { DocumentSessionFileMeta } from '../../session/types';
+import type { DocumentSessionFileMeta, DocumentSessionPdfDiagnostics } from '../../session/types';
+import type { DocumentParseResult } from '../../shared/types/document';
 import { detectDocumentFormat } from '../../shared/utils';
-import { DocumentContext, type DocumentContextValue } from './documentContextState';
+import { DocumentContext, type DocumentContextValue, type OcrJobUiState } from './documentContextState';
 
 export function DocumentProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -44,6 +50,13 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [matchReview, setMatchReview] = useState<DocumentMatchReviewState | null>(null);
   const [sessionCreatedAt, setSessionCreatedAt] = useState<string | null>(null);
   const [chatGptBridge, setChatGptBridge] = useState(EMPTY_BRIDGE_SESSION);
+  const [parseResult, setParseResult] = useState<DocumentParseResult | null>(null);
+  const [pdfDiagnostics, setPdfDiagnostics] = useState<DocumentSessionPdfDiagnostics | null>(null);
+  const [pdfArrayBuffer, setPdfArrayBuffer] = useState<ArrayBuffer | null>(null);
+  const [ocrJob, setOcrJob] = useState<OcrJobUiState | null>(null);
+  const [ocrLanguage, setOcrLanguage] = useState<OcrLanguagePreset>('rus+eng');
+  const documentIdentityRef = useRef('');
+  const ocrAbortRef = useRef<AbortController | null>(null);
 
   const persistCurrentSession = useCallback(
     async (
@@ -61,12 +74,13 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           matchReview: options?.matchReview ?? matchReview ?? undefined,
           chatGptBridge: options?.chatGptBridge ?? chatGptBridge,
           createdAt: options?.createdAt ?? sessionCreatedAt ?? undefined,
+          pdfDiagnostics: options?.pdfDiagnostics ?? pdfDiagnostics ?? undefined,
         }),
       );
       setSessionPersistError(!saved);
       return saved;
     },
-    [chatGptBridge, matchReview, sessionCreatedAt],
+    [chatGptBridge, matchReview, pdfDiagnostics, sessionCreatedAt],
   );
 
   const restoreSession = useCallback(async () => {
@@ -89,6 +103,10 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setMatchReview(session.matchReview ?? null);
       setSessionCreatedAt(session.createdAt);
       setChatGptBridge(session.chatGptBridge ?? { ...EMPTY_BRIDGE_SESSION });
+      setPdfDiagnostics(session.pdfDiagnostics ?? null);
+      setParseResult(null);
+      setPdfArrayBuffer(null);
+      setOcrJob(null);
       setFullText(null);
       setStatus('ready');
       setRestoredFromSession(true);
@@ -130,9 +148,25 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setSessionPersistError(false);
       setMatchReview(null);
       setChatGptBridge({ ...EMPTY_BRIDGE_SESSION });
+      setParseResult(null);
+      setPdfDiagnostics(null);
+      setPdfArrayBuffer(null);
+      setOcrJob(null);
+      documentIdentityRef.current = '';
 
       try {
-        const result = await parseDocumentFile(file);
+        const nextDocumentIdentity = crypto.randomUUID();
+        documentIdentityRef.current = nextDocumentIdentity;
+
+        let nextPdfBuffer: ArrayBuffer | null = null;
+        if (format === 'pdf') {
+          nextPdfBuffer = await file.arrayBuffer();
+        }
+
+        const result =
+          format === 'pdf' && nextPdfBuffer
+            ? await parseDocumentFile(new File([nextPdfBuffer], file.name, { type: file.type }))
+            : await parseDocumentFile(file);
         const nextFileMeta: DocumentSessionFileMeta = {
           name: file.name,
           type: format,
@@ -140,6 +174,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         };
         const nextTextExtracted = Boolean(result.fullText.trim());
         setFileMeta(nextFileMeta);
+        setParseResult(result);
+        setPdfArrayBuffer(nextPdfBuffer);
+        setPdfDiagnostics(toSessionPdfDiagnostics(result.pdfDiagnostics) ?? null);
         setFullText(nextTextExtracted ? result.fullText : null);
         setParseWarnings(result.warnings);
         setTextExtracted(nextTextExtracted);
@@ -153,6 +190,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
             matchReview: undefined,
             chatGptBridge: { ...EMPTY_BRIDGE_SESSION },
             createdAt,
+            pdfDiagnostics: toSessionPdfDiagnostics(result.pdfDiagnostics) ?? undefined,
           });
         } catch (error) {
           setExtraction(null);
@@ -172,6 +210,11 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         setMatchReview(null);
         setChatGptBridge({ ...EMPTY_BRIDGE_SESSION });
         setSessionCreatedAt(null);
+        setParseResult(null);
+        setPdfDiagnostics(null);
+        setPdfArrayBuffer(null);
+        setOcrJob(null);
+        documentIdentityRef.current = '';
         await clearDocumentSession();
       }
     },
@@ -179,9 +222,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   );
 
   const clearDocument = useCallback(async () => {
+    ocrAbortRef.current?.abort();
+    ocrAbortRef.current = null;
     setFileMeta(null);
     setExtraction(null);
     setFullText(null);
+    setParseResult(null);
+    setPdfDiagnostics(null);
+    setPdfArrayBuffer(null);
+    setOcrJob(null);
+    documentIdentityRef.current = '';
     setParseWarnings([]);
     setTextExtracted(false);
     setMatchReview(null);
@@ -302,12 +352,141 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     await persistCurrentSession(fileMeta, extraction, textExtracted, { chatGptBridge: nextBridge });
   }, [chatGptBridge, extraction, fileMeta, persistCurrentSession, textExtracted]);
 
+  const cancelOcr = useCallback(() => {
+    ocrAbortRef.current?.abort();
+    ocrAbortRef.current = null;
+    setOcrJob(null);
+  }, []);
+
+  const runOcrForPages = useCallback(
+    async (pageNumbers: number[]) => {
+      if (
+        !parseResult ||
+        !pdfArrayBuffer ||
+        fileMeta?.type !== 'pdf' ||
+        pageNumbers.length === 0 ||
+        ocrJob?.active
+      ) {
+        return;
+      }
+
+      const jobDocumentIdentity = documentIdentityRef.current;
+      const controller = new AbortController();
+      ocrAbortRef.current = controller;
+
+      setOcrJob({
+        active: true,
+        pageIndex: 0,
+        totalPages: pageNumbers.length,
+        pageNumber: pageNumbers[0] ?? 0,
+        progress: 0,
+        status: 'Подготовка OCR…',
+        errorMessage: null,
+      });
+
+      try {
+        const ocrResult = await executeDocumentOcr({
+          parseResult,
+          pdfArrayBuffer,
+          pageNumbers,
+          language: ocrLanguage,
+          documentIdentity: jobDocumentIdentity,
+          currentDocumentIdentity: () => documentIdentityRef.current,
+          createEngine: createLazyOcrEngine,
+          signal: controller.signal,
+          onProgress: (progress) => {
+            setOcrJob({
+              active: true,
+              pageIndex: progress.pageIndex,
+              totalPages: progress.totalPages,
+              pageNumber: progress.pageNumber,
+              progress: progress.progress,
+              status: progress.status,
+              errorMessage: null,
+            });
+          },
+        });
+
+        if (documentIdentityRef.current !== jobDocumentIdentity) {
+          return;
+        }
+
+        const nextExtraction = extractCharacteristics(ocrResult.parseResult);
+        const nextTextExtracted = Boolean(ocrResult.parseResult.fullText.trim());
+        const nextReview = pruneReviewDecisionsForCharacteristics(matchReview, nextExtraction.characteristics);
+
+        setParseResult(ocrResult.parseResult);
+        setPdfDiagnostics(ocrResult.pdfDiagnostics ?? null);
+        setExtraction(nextExtraction);
+        setFullText(nextTextExtracted ? ocrResult.parseResult.fullText : null);
+        setParseWarnings(ocrResult.parseResult.warnings);
+        setTextExtracted(nextTextExtracted);
+        setMatchReview(nextReview);
+
+        if (fileMeta) {
+          await persistCurrentSession(fileMeta, nextExtraction, nextTextExtracted, {
+            matchReview: nextReview ?? undefined,
+            pdfDiagnostics: ocrResult.pdfDiagnostics ?? undefined,
+          });
+        }
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+        if (error instanceof Error && error.message === 'STALE_OCR_DOCUMENT') {
+          return;
+        }
+        setOcrJob({
+          active: false,
+          pageIndex: 0,
+          totalPages: pageNumbers.length,
+          pageNumber: pageNumbers[0] ?? 0,
+          progress: 0,
+          status: '',
+          errorMessage:
+            error instanceof Error
+              ? error.message
+              : 'Не удалось запустить локальное OCR.',
+        });
+        return;
+      } finally {
+        if (ocrAbortRef.current === controller) {
+          ocrAbortRef.current = null;
+        }
+        if (documentIdentityRef.current === jobDocumentIdentity) {
+          setOcrJob(null);
+        }
+      }
+    },
+    [fileMeta, matchReview, ocrJob?.active, ocrLanguage, parseResult, pdfArrayBuffer, persistCurrentSession],
+  );
+
+  const runOcrForProblemPages = useCallback(async () => {
+    const candidates =
+      pdfDiagnostics?.ocrCandidatePageNumbers ??
+      parseResult?.pdfDiagnostics?.ocrCandidatePageNumbers ??
+      [];
+    if (candidates.length === 0) {
+      return;
+    }
+    await runOcrForPages(candidates);
+  }, [parseResult?.pdfDiagnostics?.ocrCandidatePageNumbers, pdfDiagnostics?.ocrCandidatePageNumbers, runOcrForPages]);
+
+  const canRunOcr = Boolean(
+    fileMeta?.type === 'pdf' &&
+      pdfArrayBuffer &&
+      parseResult &&
+      !ocrJob?.active,
+  );
+
   const value: DocumentContextValue = {
     loading,
     sessionAvailable,
     fileMeta,
     extraction,
     fullText,
+    parseResult,
+    pdfDiagnostics,
     parseWarnings,
     status,
     errorMessage,
@@ -317,8 +496,15 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     matchReview,
     sessionCreatedAt,
     chatGptBridge,
+    ocrJob,
+    ocrLanguage,
+    canRunOcr,
     loadFile,
     clearDocument,
+    runOcrForPages,
+    runOcrForProblemPages,
+    cancelOcr,
+    setOcrLanguage,
     setReviewDecision,
     resetMatchReviewForProfile,
     setBridgeResponseDraft,

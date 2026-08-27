@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FieldPilot",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Extracts data from PDF and DOCX locally in your browser to help fill web forms. No cloud, no auto-submit.",
   "permissions": ["activeTab", "scripting", "storage"],
   "background": {
@@ -24,6 +24,15 @@
   "web_accessible_resources": [
     {
       "resources": ["pdf.worker.min.mjs"],
+      "matches": ["*://*/*"]
+    },
+    {
+      "resources": [
+        "ocr/ocrEngine.js",
+        "ocr/worker.min.js",
+        "ocr/core/*",
+        "ocr/lang/*"
+      ],
       "matches": ["*://*/*"]
     }
   ]

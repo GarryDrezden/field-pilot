@@ -20,4 +20,22 @@ if (!existsSync(join(distDir, 'pdf.worker.min.mjs'))) {
   process.exit(1);
 }
 
+const ocrAssets = [
+  'ocr/ocrEngine.js',
+  'ocr/worker.min.js',
+  'ocr/core/tesseract-core.wasm.js',
+  'ocr/core/tesseract-core-simd.wasm.js',
+  'ocr/core/tesseract-core-lstm.wasm.js',
+  'ocr/core/tesseract-core-simd-lstm.wasm.js',
+  'ocr/lang/eng.traineddata.gz',
+  'ocr/lang/rus.traineddata.gz',
+];
+
+for (const asset of ocrAssets) {
+  if (!existsSync(join(distDir, asset))) {
+    console.error(`Build verification failed: ${asset} is missing from dist/`);
+    process.exit(1);
+  }
+}
+
 console.log('Build verification passed: content.js is injectable');

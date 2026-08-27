@@ -27,6 +27,15 @@ export function formatSourcePreview(item: ExtractedCharacteristic): string {
   if (item.source.pageNumber !== undefined) {
     parts.push(`Страница ${item.source.pageNumber}`);
   }
+  if (item.source.origin === 'ocr') {
+    parts.push('OCR');
+  } else if (item.source.origin === 'pdf-text') {
+    parts.push('PDF text');
+  } else if (item.source.origin === 'docx-table') {
+    parts.push('DOCX table');
+  } else if (item.source.origin === 'docx-text') {
+    parts.push('DOCX text');
+  }
   if (item.source.tableIndex !== undefined && item.source.rowIndex !== undefined) {
     parts.push(`Таблица ${item.source.tableIndex + 1}, строка ${item.source.rowIndex + 1}`);
   }

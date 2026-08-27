@@ -4,6 +4,30 @@
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-08-27
+
+### Added
+
+- Page-level PDF text quality analysis (`good` / `weak` / `empty`)
+- Scanned / hybrid PDF detection with explicit local OCR (Tesseract.js)
+- Lazy-loaded OCR bundle (`dist/ocr/`) — eng + rus language packs, offline
+- OCR progress UI, cancel, language preset (rus+eng / eng / rus)
+- Hybrid native/OCR page source selection per page
+- OCR provenance in `CharacteristicSource.origin`
+- PDF layout: geometry-aware spacing, conservative multi-column split
+- DOCX table improvements (colspan, repeated headers, empty cells)
+
+### Changed
+
+- Document parser selects native vs OCR text source per page
+- DocumentSession schema v4 stores PDF diagnostics summary
+
+### Safety / Privacy
+
+- No cloud OCR, no CDN, no external OCR requests
+- OCR never touches Current Page / FormScanner / Fill
+- OCR runs only on explicit user action (no auto-OCR on good PDFs)
+
 ## [0.7.0] — 2026-08-27
 
 ### Added

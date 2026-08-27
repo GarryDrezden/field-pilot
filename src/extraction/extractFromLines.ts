@@ -5,7 +5,7 @@ import {
   isLikelyProseLine,
   isValidCharacteristicLabel,
 } from './proseDetection';
-import type { ExtractionCandidateDraft } from './types';
+import type { CharacteristicSourceOrigin, ExtractionCandidateDraft, LineExtractionInput } from './types';
 
 const ROW_PREFIX = /^(?:№\s*)?\d+[.)]\s+/;
 
@@ -18,6 +18,7 @@ export function extractFromStructuredLine(
   pageNumber: number | undefined,
   lineNumber: number | undefined,
   context: LineExtractionContext = {},
+  origin?: CharacteristicSourceOrigin,
 ): { candidate: ExtractionCandidateDraft | null; nextContext: LineExtractionContext } {
   const trimmed = line.trim();
   if (!trimmed || isLikelyProseLine(trimmed) || isLikelyHeaderLine(trimmed)) {
@@ -25,7 +26,7 @@ export function extractFromStructuredLine(
   }
 
   const withoutPrefix = trimmed.replace(ROW_PREFIX, '').trim();
-  const delimited = extractDelimitedCandidate(withoutPrefix, trimmed, pageNumber, lineNumber);
+  const delimited = extractDelimitedCandidate(withoutPrefix, trimmed, pageNumber, lineNumber, origin);
   if (delimited) {
     return {
       candidate: delimited.candidate,
@@ -44,7 +45,7 @@ export function extractFromStructuredLine(
         rawUnit: unitMatch.rawUnit,
         valueKind: parsed.valueKind,
         extractionMethod: 'structured-line',
-        source: { text: trimmed, pageNumber, lineNumber },
+        source: { text: trimmed, pageNumber, lineNumber, origin },
       };
       return {
         candidate,
@@ -56,9 +57,7 @@ export function extractFromStructuredLine(
   return { candidate: null, nextContext: context };
 }
 
-export function extractFromLineBatch(
-  lines: Array<{ text: string; pageNumber?: number; lineNumber?: number }>,
-): ExtractionCandidateDraft[] {
+export function extractFromLineBatch(lines: LineExtractionInput[]): ExtractionCandidateDraft[] {
   const candidates: ExtractionCandidateDraft[] = [];
   let context: LineExtractionContext = {};
 
@@ -71,6 +70,7 @@ export function extractFromLineBatch(
       line.pageNumber,
       line.lineNumber,
       effectiveContext,
+      line.origin,
     );
     context = result.nextContext;
     if (result.candidate) {
@@ -117,6 +117,7 @@ function extractDelimitedCandidate(
   sourceText: string,
   pageNumber?: number,
   lineNumber?: number,
+  origin?: CharacteristicSourceOrigin,
 ): { candidate: ExtractionCandidateDraft } | null {
   const delimiters = [' ● ', ' / ', ': ', ' = '] as const;
 
@@ -147,7 +148,7 @@ function extractDelimitedCandidate(
         rawValue: parsed.rawValue,
         valueKind: parsed.valueKind,
         extractionMethod: 'delimited-line',
-        source: { text: sourceText, pageNumber, lineNumber },
+        source: { text: sourceText, pageNumber, lineNumber, origin },
       },
     };
   }

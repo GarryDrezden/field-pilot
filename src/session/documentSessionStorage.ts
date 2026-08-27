@@ -7,6 +7,7 @@ import {
   DOCUMENT_SESSION_SCHEMA_VERSION,
   DOCUMENT_SESSION_SCHEMA_VERSION_V1,
   DOCUMENT_SESSION_SCHEMA_VERSION_V2,
+  DOCUMENT_SESSION_SCHEMA_VERSION_V3,
   DOCUMENT_SESSION_STORAGE_KEY,
   type DocumentSession,
   type DocumentSessionFileMeta,
@@ -16,6 +17,7 @@ export interface BuildDocumentSessionOptions {
   matchReview?: DocumentMatchReviewState;
   chatGptBridge?: ChatGptBridgeSessionState;
   createdAt?: string;
+  pdfDiagnostics?: DocumentSession['pdfDiagnostics'];
 }
 
 export function isSessionStorageAvailable(): boolean {
@@ -43,6 +45,7 @@ export function buildDocumentSession(
     createdAt: resolvedOptions.createdAt ?? new Date().toISOString(),
     matchReview: resolvedOptions.matchReview,
     chatGptBridge: resolvedOptions.chatGptBridge ?? { ...EMPTY_BRIDGE_SESSION },
+    pdfDiagnostics: resolvedOptions.pdfDiagnostics,
   };
 }
 
@@ -56,6 +59,7 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
   };
   if (
     session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION &&
+    session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION_V3 &&
     session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION_V2 &&
     session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION_V1
   ) {
@@ -77,6 +81,7 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
 
   const matchReview = parseMatchReview(session.matchReview);
   const chatGptBridge = parseBridgeSessionState(session.chatGptBridge);
+  const pdfDiagnostics = parsePdfDiagnostics(session.pdfDiagnostics);
 
   return {
     schemaVersion: DOCUMENT_SESSION_SCHEMA_VERSION,
@@ -98,6 +103,27 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
     createdAt: typeof session.createdAt === 'string' ? session.createdAt : new Date().toISOString(),
     matchReview,
     chatGptBridge,
+    pdfDiagnostics,
+  };
+}
+
+function parsePdfDiagnostics(raw: unknown): DocumentSession['pdfDiagnostics'] {
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+  const value = raw as DocumentSession['pdfDiagnostics'];
+  if (!value?.totalPages || !Array.isArray(value.ocrCandidatePageNumbers)) {
+    return undefined;
+  }
+  return {
+    totalPages: value.totalPages,
+    goodTextPages: value.goodTextPages ?? 0,
+    weakTextPages: value.weakTextPages ?? 0,
+    emptyTextPages: value.emptyTextPages ?? 0,
+    ocrCandidatePageNumbers: value.ocrCandidatePageNumbers,
+    ocrAppliedPageNumbers: Array.isArray(value.ocrAppliedPageNumbers)
+      ? value.ocrAppliedPageNumbers
+      : undefined,
   };
 }
 

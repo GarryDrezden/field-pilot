@@ -58,6 +58,15 @@ FieldPilot автоматически распознаёт колонки:
 
 При повторном импорте того же каталога свойства сопоставляются по **`externalId`**, а не по названию — внутренние ID и mappings сохраняются. Одинаковые названия с разными `externalId` (например PARAM2226 и PARAM2248) остаются разными свойствами.
 
+### v0.8 — OCR & Complex Documents
+
+- **PDF:** native text layer, scanned PDF via optional **local OCR**, hybrid PDFs
+- Page-level text quality; OCR only when weak/empty or user-requested
+- **OCR:** Tesseract.js, offline, lazy-loaded (`dist/ocr/`), eng + rus
+- Hybrid page source: native text on good pages, OCR text on recognized pages
+- Provenance: `source.origin` (`pdf-text`, `ocr`, `docx-table`, …)
+- Improved PDF line reconstruction (spacing, multi-column) + DOCX tables
+
 ### v0.7 — ChatGPT Bridge
 
 - Manual workflow: copy prompt → paste in ChatGPT → paste JSON back

@@ -4,11 +4,14 @@ import { extractFromLineBatch } from './extractFromLines';
 import { extractFromTableRows } from './extractFromTables';
 import { normalizeUnit } from './normalizeUnit';
 import { parseCharacteristicValue } from './parseValue';
+import type { DocumentPage } from '../shared/types/document';
 import type {
+  CharacteristicSourceOrigin,
   ExtractedCharacteristic,
   ExtractionCandidateDraft,
   ExtractionResult,
   ExtractionStats,
+  LineExtractionInput,
 } from './types';
 
 let idCounter = 0;
@@ -31,38 +34,22 @@ export function extractCharacteristics(document: DocumentParseResult): Extractio
 
   if (document.tables?.length) {
     for (const table of document.tables) {
-      drafts.push(...extractFromTableRows(table.rows, table.index));
+      drafts.push(...extractFromTableRows(table.rows, table.index, 'docx-table'));
     }
   }
 
-  const lineInputs: Array<{ text: string; pageNumber?: number; lineNumber?: number }> = [];
+  const lineInputs: LineExtractionInput[] = [];
 
   if (document.pages?.length) {
     for (const page of document.pages) {
-      if (page.lines?.length) {
-        for (const line of page.lines) {
-          lineInputs.push({
-            text: line.text,
-            pageNumber: page.pageNumber,
-            lineNumber: line.lineNumber,
-          });
-        }
-      } else if (page.text) {
-        page.text.split(/\r?\n/).forEach((text, index) => {
-          if (text.trim()) {
-            lineInputs.push({
-              text: text.trim(),
-              pageNumber: page.pageNumber,
-              lineNumber: index + 1,
-            });
-          }
-        });
-      }
+      lineInputs.push(...lineInputsFromPage(page));
     }
   } else if (document.fullText) {
+    const origin: CharacteristicSourceOrigin =
+      document.type === 'pdf' ? 'pdf-text' : 'docx-text';
     document.fullText.split(/\r?\n/).forEach((text, index) => {
       if (text.trim()) {
-        lineInputs.push({ text: text.trim(), lineNumber: index + 1 });
+        lineInputs.push({ text: text.trim(), lineNumber: index + 1, origin });
       }
     });
   }
@@ -98,6 +85,39 @@ function finalizeDraft(draft: ExtractionCandidateDraft): ExtractedCharacteristic
     extractionMethod: draft.extractionMethod,
     source: draft.source,
   };
+}
+
+function lineInputsFromPage(page: DocumentPage): LineExtractionInput[] {
+  const origin: CharacteristicSourceOrigin =
+    page.preferredTextSource === 'ocr' ? 'ocr' : 'pdf-text';
+  const inputs: LineExtractionInput[] = [];
+
+  if (page.lines?.length) {
+    for (const line of page.lines) {
+      inputs.push({
+        text: line.text,
+        pageNumber: page.pageNumber,
+        lineNumber: line.lineNumber,
+        origin,
+      });
+    }
+    return inputs;
+  }
+
+  if (page.text) {
+    page.text.split(/\r?\n/).forEach((text, index) => {
+      if (text.trim()) {
+        inputs.push({
+          text: text.trim(),
+          pageNumber: page.pageNumber,
+          lineNumber: index + 1,
+          origin,
+        });
+      }
+    });
+  }
+
+  return inputs;
 }
 
 function buildStats(characteristics: ExtractedCharacteristic[]): ExtractionStats {
