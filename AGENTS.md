@@ -291,7 +291,11 @@ Load unpacked: папка **`dist/`**
 - Tests: canonicalization, matcher safety, review decisions, HARSLE matching (+27)
 - Bundle: `content.js` ~1506 KB (+~27 KB vs v0.3.1)
 
-### 2026-08-27 — v0.9.0 Compatibility & UX Hardening
+### 2026-08-27 — v0.9.1 matching list display sort
+
+- Default UI sort in «Сопоставление с профилем»: 🟢 → 🟡 → 🔴 → ⚪ (stable document order within groups)
+- `sortMatchesForDisplay.ts` — display-only; domain matching unchanged
+- Tests: **173** total (+8)
 
 - **HARSLE 29→28:** regression from multi-column split on page 14; lost `Linear Guide`, `Ball Screw`, `Reducer`; false positives `● HIWIN`/`● ROUIST`; fixed `shouldPreventColumnSplit()` — back to **29** characteristics
 - FormScanner: label priority, `labelSource`, service-field filter, visibility, duplicate-label ambiguity, `scanGeneration`
