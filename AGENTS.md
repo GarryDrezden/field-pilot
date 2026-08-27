@@ -177,7 +177,7 @@ Load unpacked: папка **`dist/`**
 
 ### 2026-08-27 — v0.3.0 Local Extraction
 
-**Коммит:** (после push)
+**Коммит:** `df1e460`
 
 - PDF line reconstruction (`reconstructPdfLines.ts`) по координатам PDF.js
 - `src/extraction/*` — types, parseValue, normalizeUnit, tables/lines/dedupe
