@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.2.0 (Profiles & Property Catalog + XLSX)  
-**Milestone:** v0.1 foundation + локальные профили, XLSX-каталог, exact matching профиль ↔ поля страницы.
+**Версия:** v0.3.0 (Local Extraction)  
+**Milestone:** v0.1 foundation + профили/XLSX + локальное извлечение характеристик из документов.
 
 ### Что уже работает
 
@@ -18,6 +18,8 @@
 - Загрузка PDF / DOCX, локальный парсинг
 - Form Scanner: input, textarea, select + label resolver
 - Preview извлечённого текста
+- **Извлечение характеристик:** PDF lines, DOCX tables, structured/delimited parsing
+- **ExtractedCharacteristic** с source metadata и UI preview
 - **Профили:** каталог свойств, import/export JSON, **XLSX**, CSV/TSV/TXT
 - **Reimport по externalId** — mappings сохраняются при обновлении каталога
 - **Exact matching:** saved mapping, exact label, exact alias
@@ -26,7 +28,6 @@
 
 ### Что НЕ реализовано (не начинать без запроса)
 
-- Извлечение характеристик из документа (v0.3)
 - Document → profile matching (v0.4)
 - Заполнение полей (v0.5)
 - Fuzzy / AI / OCR / ChatGPT Bridge
@@ -44,6 +45,7 @@ src/
   document/pdf|docx parsers → DocumentParseResult
   form/             formScanner, labelResolver
   profile/          storage, import, export, matcher, fieldSignature
+  extraction/       characteristic extraction from documents
   shared/           types, utils
 ```
 
@@ -63,7 +65,8 @@ src/
 |------|------------|
 | `src/background/index.ts` | Клик по иконке, inject, проверка restricted URL |
 | `src/content/index.tsx` | Shadow DOM + React mount |
-| `src/document/pdf/setupPdfjs.ts` | Конфиг PDF.js worker |
+| `src/document/pdf/reconstructPdfLines.ts` | PDF visual line reconstruction |
+| `src/extraction/extractCharacteristics.ts` | Document → ExtractedCharacteristic |
 | `src/profile/profileXlsxImport.ts` | XLSX parse (SheetJS) |
 | `src/profile/profileImport.ts` | Column mapping, catalog merge by externalId |
 | `src/profile/profileStorage.ts` | chrome.storage.local, CRUD профилей |
@@ -97,7 +100,7 @@ Load unpacked: папка **`dist/`**
 - Не работает на `chrome://`, Web Store (by design)
 - PDF без text layer → предупреждение, OCR позже
 - checkbox/radio не сканируются
-- `content.js` ~1.46 MB (pdfjs + mammoth + React + xlsx + profiles)
+- `content.js` ~1.47 MB (pdfjs + mammoth + React + xlsx + extraction)
 - Document → profile matching не реализован
 - Только exact matching (без fuzzy)
 - externalId используется для identity каталога, не для auto-match с DOM
@@ -171,6 +174,18 @@ Load unpacked: папка **`dist/`**
 - Real file verified: 1182 properties, 1182 unique externalIds
 - `sourceOrder`, `sourceIndex` из колонок «Сортировка» и «#»
 - Bundle: `content.js` ~1459 KB (+~347 KB vs v0.2 без xlsx)
+
+### 2026-08-27 — v0.3.0 Local Extraction
+
+**Коммит:** (после push)
+
+- PDF line reconstruction (`reconstructPdfLines.ts`) по координатам PDF.js
+- `src/extraction/*` — types, parseValue, normalizeUnit, tables/lines/dedupe
+- `extractCharacteristics()` — pure function, без профиля
+- UI: `ExtractedCharacteristicsPanel` в DocumentSection
+- Conservative prose rejection; structured lines с `Max.` abbreviations
+- HARSLE PB-2000 PDF acceptance: 29 candidates, key technical params found
+- Tests: 55 total (+27); bundle ~1473 KB (+~14 KB vs v0.2.0)
 
 ---
 

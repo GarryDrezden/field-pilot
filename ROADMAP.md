@@ -55,23 +55,26 @@ Current page field
 
 ---
 
-## v0.3 — Local Extraction (CURRENT)
+## v0.3 — Local Extraction ✅
 
 Превратить текст документа в структурированные характеристики.
 
-- [ ] поиск пар `характеристика → значение`
-- [ ] извлечение единиц измерения
-- [ ] обработка таблиц документа
-- [ ] нормализация регистра, пробелов, разделителей
-- [ ] десятичная запятая / точка
-- [ ] нормализация единиц (ru/en)
-- [ ] сохранение исходной подписи и источника значения
+- [x] PDF line reconstruction (PDF.js coordinates)
+- [x] `ExtractedCharacteristic` + `ExtractionResult`
+- [x] table-row / structured-line / delimited-line extraction
+- [x] `parseCharacteristicValue()` — integer, decimal, ±, range, dimension
+- [x] `normalizeUnit()` RU/EN, longest-match-first
+- [x] source metadata (page, line, table, row)
+- [x] conservative prose rejection
+- [x] exact deduplication
+- [x] UI: «Найденные характеристики»
+- [x] tests + HARSLE PDF acceptance
 
-**Результат:** FieldPilot понимает, какие характеристики есть в документе.
+**Результат:** FieldPilot локально находит структурированные пары label/value/unit в PDF/DOCX.
 
 ---
 
-## v0.4 — Matching Engine
+## v0.4 — Matching Engine (CURRENT)
 
 ```text
 document characteristic → profile property → page field

@@ -1,7 +1,10 @@
 import { useRef, useState } from 'react';
 import { parseDocumentFile } from '../../document/parseDocument';
+import { extractCharacteristics } from '../../extraction/extractCharacteristics';
+import type { ExtractionResult } from '../../extraction/types';
 import type { LoadedDocument } from '../../shared/types/document';
 import { detectDocumentFormat, formatFileSize } from '../../shared/utils';
+import { ExtractedCharacteristicsPanel } from './ExtractedCharacteristicsPanel';
 import { ExtractedTextPreview } from './ExtractedTextPreview';
 
 const initialDocumentState: LoadedDocument = {
@@ -15,6 +18,8 @@ export function DocumentSection() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [documentState, setDocumentState] = useState<LoadedDocument>(initialDocumentState);
+  const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
 
   async function handleFile(file: File): Promise<void> {
     const format = detectDocumentFormat(file);
@@ -26,6 +31,8 @@ export function DocumentSection() {
         status: 'error',
         errorMessage: 'Поддерживаются только PDF и DOCX.',
       });
+      setExtraction(null);
+      setExtractionError(null);
       return;
     }
 
@@ -35,6 +42,8 @@ export function DocumentSection() {
       sizeBytes: file.size,
       status: 'parsing',
     });
+    setExtraction(null);
+    setExtractionError(null);
 
     try {
       const result = await parseDocumentFile(file);
@@ -45,6 +54,14 @@ export function DocumentSection() {
         status: 'ready',
         result,
       });
+
+      try {
+        setExtraction(extractCharacteristics(result));
+      } catch (error) {
+        setExtractionError(
+          error instanceof Error ? error.message : 'Не удалось извлечь характеристики.',
+        );
+      }
     } catch (error) {
       setDocumentState({
         fileName: file.name,
@@ -53,6 +70,7 @@ export function DocumentSection() {
         status: 'error',
         errorMessage: error instanceof Error ? error.message : 'Не удалось разобрать документ.',
       });
+      setExtraction(null);
     }
   }
 
@@ -130,7 +148,7 @@ export function DocumentSection() {
                     : ''
               }`}
             >
-              {getStatusLabel(documentState)}
+              {getStatusLabel(documentState, extraction)}
             </span>
           </div>
         </div>
@@ -148,19 +166,29 @@ export function DocumentSection() {
         </ul>
       ) : null}
 
+      {extractionError && <p className="fp-status is-error">{extractionError}</p>}
+
       {documentState.result?.fullText && (
         <ExtractedTextPreview text={documentState.result.fullText} />
       )}
+
+      {extraction && <ExtractedCharacteristicsPanel extraction={extraction} />}
     </section>
   );
 }
 
-function getStatusLabel(documentState: LoadedDocument): string {
+function getStatusLabel(documentState: LoadedDocument, extraction: ExtractionResult | null): string {
   switch (documentState.status) {
     case 'parsing':
       return 'Разбор документа…';
     case 'ready':
-      return documentState.result?.fullText ? 'Текст извлечён' : 'Текст не найден';
+      if (!documentState.result?.fullText) {
+        return 'Текст не найден';
+      }
+      if (extraction) {
+        return 'Характеристики извлечены';
+      }
+      return 'Текст извлечён';
     case 'error':
       return 'Ошибка';
     default:

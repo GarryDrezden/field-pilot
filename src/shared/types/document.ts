@@ -1,6 +1,12 @@
+export interface DocumentLine {
+  lineNumber: number;
+  text: string;
+}
+
 export interface DocumentPage {
   pageNumber: number;
   text: string;
+  lines?: DocumentLine[];
 }
 
 export interface DocumentTable {

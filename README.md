@@ -56,18 +56,40 @@ FieldPilot автоматически распознаёт колонки:
 
 При повторном импорте того же каталога свойства сопоставляются по **`externalId`**, а не по названию — внутренние ID и mappings сохраняются. Одинаковые названия с разными `externalId` (например PARAM2226 и PARAM2248) остаются разными свойствами.
 
+### v0.3 — Local Extraction
+
+- PDF line reconstruction по координатам PDF.js (visual lines вместо `join(' ')`)
+- Локальное извлечение `ExtractedCharacteristic` из PDF/DOCX без профиля и без AI
+- Парсер значений: integer, decimal, ±, range, dimension
+- Нормализация единиц RU/EN (longest-match-first: `m/min` ≠ `m`)
+- Источники: DOCX tables → PDF lines → delimited lines (`:`, `=`, `/`, `●`)
+- UI: «Найденные характеристики» с поиском, фильтром и preview источника
+
 ## Pipeline
 
 ```text
-Document → extracted characteristic → profile property → current page field
+Document
+   ↓
+ExtractedCharacteristic       ✅ v0.3
+   ↓
+ProfileProperty               ⏳ v0.4
+   ↓
+PageField                     ✅ v0.2
+   ↓
+Fill                          ⏳ v0.5
 ```
 
-**Сейчас работают:** document parsing (v0.1) и profile property ↔ page field (v0.2).  
-**Следующий шаг:** извлечение характеристик из документа и document → profile matching.
+**Сейчас работают:**
+
+- document parsing + preview (v0.1)
+- **document → extracted characteristics** (v0.3)
+- profile property ↔ page field (v0.2)
+
+**Следующий шаг:** document characteristic → profile property matching (v0.4).
 
 ## Что запланировано
 
-- Извлечение характеристик из документа (v0.3)
+- Document → profile matching + confidence score (v0.4)
 - Document → profile → page matching engine + confidence score (v0.4)
 - Безопасное заполнение выбранных полей без auto-submit (v0.5)
 - Расширенное обучение на исправлениях пользователя (v0.6)

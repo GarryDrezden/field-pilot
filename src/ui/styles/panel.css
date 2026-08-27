@@ -429,3 +429,56 @@
   background: #f8fafc;
 }
 
+.fp-characteristics {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.fp-characteristics h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.fp-characteristic-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.fp-characteristic-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 4px;
+}
+
+.fp-characteristic-label {
+  font-weight: 600;
+}
+
+.fp-characteristic-value {
+  color: #0f172a;
+}
+
+.fp-characteristic-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.fp-source-preview {
+  margin: 6px 0 0;
+  padding: 8px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+

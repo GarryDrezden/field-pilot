@@ -1,5 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import type { DocumentParseResult } from '../../shared/types/document';
+import { pageTextFromLines, reconstructPdfLines } from './reconstructPdfLines';
 import { ensurePdfWorkerConfigured } from './setupPdfjs';
 
 export async function parsePdfFile(file: File): Promise<DocumentParseResult> {
@@ -15,19 +16,17 @@ export async function parsePdfFile(file: File): Promise<DocumentParseResult> {
   });
 
   const pdf = await loadingTask.promise;
-  const pages: DocumentParseResult['pages'] = [];
+  const pages: NonNullable<DocumentParseResult['pages']> = [];
   const pageTexts: string[] = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const textContent = await page.getTextContent();
-    const text = textContent.items
-      .map((item) => ('str' in item ? item.str : ''))
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const textItems = textContent.items.filter((item) => 'str' in item);
+    const lines = reconstructPdfLines(textItems);
+    const text = pageTextFromLines(lines);
 
-    pages.push({ pageNumber, text });
+    pages.push({ pageNumber, text, lines });
     pageTexts.push(text);
   }
 

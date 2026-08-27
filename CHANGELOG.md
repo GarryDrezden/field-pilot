@@ -4,6 +4,24 @@
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-27
+
+### Added
+
+- PDF visual line reconstruction via PDF.js text item coordinates
+- Local characteristic extraction module (`src/extraction/`)
+- Value parser: integer, decimal comma/dot, ±, ranges, dimensions
+- Unit normalization RU/EN with longest-match-first
+- Extraction from DOCX tables, PDF structured lines, delimited text
+- Source metadata (page, line, table, row) + UI source preview
+- «Найденные характеристики» panel with search and numeric/text filter
+- 27 new unit tests + HARSLE PDF acceptance test
+
+### Changed
+
+- PDF `fullText` and page text now preserve line breaks
+- Production content bundle ~1.47 MB (+~14 KB vs v0.2.0)
+
 ## [0.2.0] — 2026-08-27
 
 ### Added
@@ -45,6 +63,7 @@
 - `scripts/verify-build.mjs` — проверка injectable content bundle
 - Permissions: `activeTab`, `scripting`, `storage` only
 
-[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/GarryDrezden/field-pilot/commit/17decdd
