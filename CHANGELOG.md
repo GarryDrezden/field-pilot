@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-08-27
+
+### Improved
+
+- Profile matching list: default display sort by effective status (🟢 → 🟡 → 🔴 → ⚪), stable document order within each group
+
 ## [0.9.0] — 2026-08-27
 
 ### Fixed

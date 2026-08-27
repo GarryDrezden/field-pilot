@@ -10,6 +10,7 @@ import {
 import { LearnedMappingConflictDialog } from './LearnedMappingConflictDialog';
 import { ChatGptBridgeSection } from './ChatGptBridgeSection';
 import { formatCharacteristicValue, formatSourcePreview } from './matchRowUtils';
+import { sortMatchesForDisplay } from '../../matching/sortMatchesForDisplay';
 
 type MatchFilter = 'all' | 'high' | 'review' | 'reject' | 'ignored' | 'learned';
 
@@ -74,6 +75,11 @@ export function ProfileMatchingSection() {
       return haystack.includes(query);
     });
   }, [characteristicById, effectiveMatches, filter, propertyById, search]);
+
+  const displayedMatches = useMemo(
+    () => sortMatchesForDisplay(filteredMatches),
+    [filteredMatches],
+  );
 
   async function handleRemember(characteristicId: string, propertyId: string): Promise<void> {
     const characteristic = characteristicById.get(characteristicId);
@@ -197,7 +203,7 @@ export function ProfileMatchingSection() {
       </div>
 
       <ul className="fp-match-list">
-        {filteredMatches.map((match) => {
+        {displayedMatches.map((match) => {
           const characteristic = characteristicById.get(match.characteristicId);
           if (!characteristic) {
             return null;
@@ -266,7 +272,7 @@ export function ProfileMatchingSection() {
         })}
       </ul>
 
-      {filteredMatches.length === 0 && <p className="fp-empty">Ничего не найдено по фильтру.</p>}
+      {displayedMatches.length === 0 && <p className="fp-empty">Ничего не найдено по фильтру.</p>}
 
       {pickerCharacteristicId && (
         <PropertyPicker
