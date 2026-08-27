@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --config vite.background.config.ts & vite build --watch --config vite.content.config.ts",
-    "build": "node scripts/generate-icons.mjs && tsc -b && vite build --config vite.background.config.ts && vite build --config vite.content.config.ts && vite build --config vite.bootstrap.config.ts && node scripts/copy-assets.mjs",
+    "build": "node scripts/generate-icons.mjs && tsc -b && vite build --config vite.background.config.ts && vite build --config vite.content.config.ts && node scripts/copy-assets.mjs && node scripts/verify-build.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",

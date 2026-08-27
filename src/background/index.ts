@@ -1,7 +1,13 @@
 import type { ExtensionMessage } from '../shared/types/messages';
+import { getRestrictedPageMessage, isRestrictedPageUrl } from '../shared/utils/pageAccess';
 
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) {
+    return;
+  }
+
+  if (isRestrictedPageUrl(tab.url)) {
+    console.info(`[FieldPilot] ${getRestrictedPageMessage()}`);
     return;
   }
 
@@ -17,9 +23,10 @@ chrome.action.onClicked.addListener(async (tab) => {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ['bootstrap.js'],
+      files: ['content.js'],
     });
   } catch (error) {
-    console.error('[FieldPilot] Failed to inject content script:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('[FieldPilot] Failed to inject content script:', message);
   }
 });
