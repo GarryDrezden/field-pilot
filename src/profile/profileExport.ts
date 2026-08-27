@@ -22,6 +22,8 @@ export interface ProfileExportPayload {
       externalId?: string;
       unit?: string;
       aliases: string[];
+      sourceOrder?: number;
+      sourceIndex?: number;
     }>;
     mappings: PropertyPageMapping[];
   };
@@ -40,6 +42,8 @@ export function exportProfile(profile: FieldProfile): ProfileExportPayload {
         externalId: property.externalId,
         unit: property.unit,
         aliases: property.aliases,
+        sourceOrder: property.sourceOrder,
+        sourceIndex: property.sourceIndex,
       })),
       mappings: profile.mappings,
     },
@@ -76,6 +80,8 @@ export function parseProfileExport(raw: unknown): ImportedProfileBundle {
         externalId: property.externalId,
         unit: property.unit,
         aliases: property.aliases ?? [],
+        sourceOrder: property.sourceOrder,
+        sourceIndex: property.sourceIndex,
       })),
       mappings: payload.profile.mappings ?? [],
     };
@@ -114,6 +120,8 @@ export function buildProfileFromImport(
       externalId: draft.externalId,
       unit: draft.unit,
       aliases: draft.aliases ?? [],
+      sourceOrder: draft.sourceOrder,
+      sourceIndex: draft.sourceIndex,
     };
   });
 

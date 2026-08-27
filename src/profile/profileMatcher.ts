@@ -20,18 +20,19 @@ export function matchProfileToFields(profile: FieldProfile, fields: FormField[])
     matchSingleProperty(profile, property, fields, indexes),
   );
 
-  const matchedOnPageCount = rows.filter((row) => row.fieldRuntimeId !== null).length;
-  const savedMappingCount = rows.filter((row) => row.savedMappingExists && row.fieldRuntimeId !== null).length;
-  const needsAssignmentCount = rows.filter(
-    (row) => row.fieldRuntimeId === null && !row.isAmbiguous,
-  ).length;
+  const linkedRows = rows.filter((row) => row.fieldRuntimeId !== null);
+  const savedRows = linkedRows.filter((row) => row.matchSource === 'saved');
+  const manualCount = savedRows.filter((row) => row.savedMappingExists).length;
 
   return {
     pageFieldCount: fields.length,
     profilePropertyCount: profile.properties.length,
-    matchedOnPageCount,
-    savedMappingCount,
-    needsAssignmentCount,
+    linkedCount: linkedRows.length,
+    exactLabelCount: rows.filter((row) => row.matchSource === 'exact-label').length,
+    exactAliasCount: rows.filter((row) => row.matchSource === 'exact-alias').length,
+    manualCount,
+    ambiguousCount: rows.filter((row) => row.isAmbiguous).length,
+    notOnPageCount: rows.filter((row) => row.fieldRuntimeId === null && !row.isAmbiguous).length,
     rows,
   };
 }

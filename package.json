@@ -1,6 +1,6 @@
 {
   "name": "field-pilot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,11 +15,12 @@
     "mammoth": "^1.9.0",
     "pdfjs-dist": "^4.10.38",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@types/node": "^22.13.10",
     "@types/chrome": "^0.0.304",
+    "@types/node": "^22.13.10",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.3.4",

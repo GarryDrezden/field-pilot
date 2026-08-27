@@ -8,6 +8,19 @@ interface MappingsSectionProps {
   fields: FormField[];
 }
 
+function matchSourceLabel(source: ProfileMatchSummary['rows'][number]['matchSource']): string {
+  switch (source) {
+    case 'exact-label':
+      return 'Exact';
+    case 'exact-alias':
+      return 'Alias';
+    case 'saved':
+      return 'Manual';
+    default:
+      return '—';
+  }
+}
+
 export function MappingsSection({ fields }: MappingsSectionProps) {
   const { activeProfile, saveMapping } = useProfiles();
   const [filter, setFilter] = useState<MappingFilter>('all');
@@ -28,7 +41,7 @@ export function MappingsSection({ fields }: MappingsSectionProps) {
     }
 
     return summary.rows.filter((row) => {
-      const haystack = `${row.property.name} ${row.fieldLabel ?? ''}`.toLocaleLowerCase('ru-RU');
+      const haystack = `${row.property.name} ${row.property.externalId ?? ''} ${row.fieldLabel ?? ''}`.toLocaleLowerCase('ru-RU');
       if (search && !haystack.includes(search.toLocaleLowerCase('ru-RU'))) {
         return false;
       }
@@ -68,11 +81,13 @@ export function MappingsSection({ fields }: MappingsSectionProps) {
   return (
     <div className="fp-mappings">
       <div className="fp-mapping-stats">
-        <div>Поля страницы: {summary.pageFieldCount}</div>
-        <div>Свойства профиля: {summary.profilePropertyCount}</div>
-        <div>Найдено на странице: {summary.matchedOnPageCount}</div>
-        <div>Сохранённых связей: {summary.savedMappingCount}</div>
-        <div>Требуют назначения: {summary.needsAssignmentCount}</div>
+        <div>Свойств профиля: {summary.profilePropertyCount}</div>
+        <div>Полей страницы: {summary.pageFieldCount}</div>
+        <div>Связано: {summary.linkedCount}</div>
+        <div>Exact match: {summary.exactLabelCount + summary.exactAliasCount}</div>
+        <div>Manual: {summary.manualCount}</div>
+        <div>Неоднозначно: {summary.ambiguousCount}</div>
+        <div>Не на странице: {summary.notOnPageCount}</div>
       </div>
 
       <div className="fp-toolbar">
@@ -98,7 +113,10 @@ export function MappingsSection({ fields }: MappingsSectionProps) {
       <ul className="fp-mapping-list">
         {filteredRows.map((row) => (
           <li key={row.property.id} className="fp-mapping-item">
-            <div className="fp-mapping-property">{row.property.name}</div>
+            <div className="fp-mapping-property">
+              <div>{row.property.name}</div>
+              {row.property.externalId && <div className="fp-property-code">{row.property.externalId}</div>}
+            </div>
             <div className="fp-mapping-arrow">→</div>
             <div className="fp-mapping-target">
               {row.fieldRuntimeId ? (
@@ -120,21 +138,14 @@ export function MappingsSection({ fields }: MappingsSectionProps) {
                   {fields.map((field) => (
                     <option key={field.id} value={field.id}>
                       {field.label}
+                      {field.name ? ` · ${field.name}` : ''}
                     </option>
                   ))}
                 </select>
               )}
             </div>
             <div className="fp-mapping-meta">
-              {row.fieldRuntimeId ? (
-                <>
-                  {row.matchSource === 'exact-label' && '✓ exact'}
-                  {row.matchSource === 'exact-alias' && '✓ alias'}
-                  {row.matchSource === 'saved' && '✓ saved'}
-                </>
-              ) : (
-                '⚠ не связано'
-              )}
+              {row.fieldRuntimeId ? matchSourceLabel(row.matchSource) : row.isAmbiguous ? 'Ambiguous' : '—'}
             </div>
             {!row.fieldRuntimeId && !row.isAmbiguous && (
               <button

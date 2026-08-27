@@ -52,9 +52,18 @@ describe('fieldSignature', () => {
 describe('profileMatcher', () => {
   it('matches exact labels and leaves missing properties unlinked', () => {
     const summary = matchProfileToFields(sampleProfile, sampleFields);
-    expect(summary.matchedOnPageCount).toBe(1);
+    expect(summary.linkedCount).toBe(1);
     expect(summary.rows.find((row) => row.property.id === 'p1')?.matchSource).toBe('exact-label');
     expect(summary.rows.find((row) => row.property.id === 'p3')?.fieldRuntimeId).toBeNull();
+  });
+
+  it('matches exact alias labels', () => {
+    const profile: FieldProfile = {
+      ...sampleProfile,
+      properties: [{ id: 'p2', name: 'Длина, мм', aliases: ['Вес, кг'] }],
+    };
+    const summary = matchProfileToFields(profile, sampleFields);
+    expect(summary.rows.find((row) => row.property.id === 'p2')?.matchSource).toBe('exact-alias');
   });
 
   it('restores saved mapping on a new scan', () => {

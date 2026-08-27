@@ -31,7 +31,7 @@ Current page field
 
 ---
 
-## v0.2 — Profiles & Property Catalog ✅ (CURRENT)
+## v0.2 — Profiles & Property Catalog ✅
 
 Локальный слой **каталог свойств ↔ поля страницы**.
 
@@ -39,22 +39,23 @@ Current page field
 - [x] `PageFieldSignature` (без DOM Element в storage)
 - [x] `chrome.storage.local`, `schemaVersion: 1`
 - [x] create / rename / delete / active profile
-- [x] ручной CRUD свойств (name, unit, aliases, externalId)
+- [x] ручной CRUD свойств (name, unit, aliases, externalId, sourceOrder)
+- [x] **импорт XLSX** с preview, column mapping, reimport по externalId
 - [x] импорт JSON, CSV, TSV, TXT / paste list
 - [x] экспорт / импорт профиля JSON
 - [x] `normalizePropertyLabel()` для exact matching
 - [x] exact label / alias / saved mapping
-- [x] resolve saved mapping по сигнатуре поля
-- [x] UI: профиль, свойства, сопоставления, «Запомнить»
-- [x] unit tests для import / matcher / normalize
+- [x] resolve saved mapping по сигнатуре поля (ambiguous detection)
+- [x] UI: профиль, свойства (1000+), сопоставления, «Запомнить»
+- [x] unit tests: import, xlsx, matcher, export, normalize
 
-**Результат:** пользователь ведёт каталог свойств и связывает их с полями формы на разных карточках.
+**Результат:** пользователь импортирует реальный каталог (~1182 свойств), ведёт его локально и связывает с полями формы.
 
 **Не входит:** document matching, fill, fuzzy/AI.
 
 ---
 
-## v0.3 — Local Extraction
+## v0.3 — Local Extraction (CURRENT)
 
 Превратить текст документа в структурированные характеристики.
 

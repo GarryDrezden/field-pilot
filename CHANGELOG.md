@@ -4,13 +4,22 @@
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-08-27
+
 ### Added
 
-- v0.2 Profiles: `FieldProfile`, property catalog, `chrome.storage.local`
-- Import: JSON, CSV, TSV, TXT / paste; export profile JSON
-- Exact profile ↔ page matching + `PageFieldSignature`
-- UI: profile selector, properties CRUD, mappings screen
-- Tests: normalizePropertyLabel, profileImport, profileMatcher
+- XLSX import (SheetJS) с preview, автоопределением колонок и reimport по `externalId`
+- `sourceOrder`, `sourceIndex` в `ProfileProperty`
+- Catalog merge: added / updated / unchanged / conflicts / missing from export
+- Duplicate names allowed when `externalId` differs
+- Compact property catalog UI (1000+ items, search, linked/unlinked filter)
+- Mapping stats: exact / manual / ambiguous / not on page
+- Tests: xlsx fixture, reimport identity, export roundtrip, ambiguous signature
+
+### Changed
+
+- Property identity on import: primary key is `externalId`, not normalized name
+- Production content bundle includes xlsx (~1.46 MB minified)
 
 ## [0.1.0] — 2026-08-27
 
@@ -36,5 +45,6 @@
 - `scripts/verify-build.mjs` — проверка injectable content bundle
 - Permissions: `activeTab`, `scripting`, `storage` only
 
-[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/GarryDrezden/field-pilot/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/GarryDrezden/field-pilot/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/GarryDrezden/field-pilot/commit/17decdd

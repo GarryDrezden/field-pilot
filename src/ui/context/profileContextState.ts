@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { ImportedPropertyDraft } from '../../profile/profileTypes';
+import type { CatalogMergeReport, ImportedPropertyDraft } from '../../profile/profileTypes';
 import type { FieldProfile } from '../../profile/profileTypes';
 import * as profileStorage from '../../profile/profileStorage';
 
@@ -13,10 +13,7 @@ export interface ProfileContextValue {
   createProfile: (name: string) => Promise<FieldProfile>;
   renameProfile: (profileId: string, name: string) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
-  importProperties: (
-    profileId: string,
-    drafts: ImportedPropertyDraft[],
-  ) => Promise<{ added: number; duplicates: number; invalid: number }>;
+  importProperties: (profileId: string, drafts: ImportedPropertyDraft[]) => Promise<CatalogMergeReport>;
   importProfileJson: (raw: unknown) => Promise<FieldProfile>;
   exportActiveProfile: () => Promise<string>;
   saveMapping: (
@@ -27,7 +24,7 @@ export interface ProfileContextValue {
   addProperty: (draft: ImportedPropertyDraft) => Promise<void>;
   updateProperty: (
     propertyId: string,
-    patch: Partial<{ name: string; externalId: string; unit: string; aliases: string[] }>,
+    patch: Partial<{ name: string; externalId: string; unit: string; aliases: string[]; sourceOrder: number; sourceIndex: number }>,
   ) => Promise<void>;
   deleteProperty: (propertyId: string) => Promise<void>;
 }

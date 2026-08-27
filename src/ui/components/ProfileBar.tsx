@@ -59,9 +59,14 @@ export function ProfileBar({ onOpenScreen }: ProfileBarProps) {
       {error && <p className="fp-status is-error">{error}</p>}
 
       {!profiles.length && !isCreating && (
-        <button type="button" className="fp-button fp-button-secondary" onClick={() => setIsCreating(true)}>
-          Создать профиль
-        </button>
+        <div className="fp-inline-form">
+          <button type="button" className="fp-button fp-button-secondary" onClick={() => setIsCreating(true)}>
+            Создать профиль
+          </button>
+          <button type="button" className="fp-button fp-button-secondary" onClick={() => onOpenScreen('profile-import')}>
+            Импортировать каталог
+          </button>
+        </div>
       )}
 
       {isCreating && (

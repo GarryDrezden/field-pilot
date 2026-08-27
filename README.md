@@ -35,12 +35,26 @@ FieldPilot должен сократить этот процесс до:
 ### v0.2 — Profiles & Property Catalog
 
 - Локальные профили в `chrome.storage.local` (`schemaVersion: 1`)
-- Каталог свойств профиля (name, unit, aliases, externalId)
+- Каталог свойств профиля (`name`, `externalId`, `unit`, `aliases`, `sourceOrder`, `sourceIndex`)
+- **Импорт XLSX** (основной формат рабочего каталога) с preview и reimport по `externalId`
 - Импорт: JSON, CSV, TSV, TXT / вставка списка
 - Экспорт профиля в JSON
 - Exact matching: профиль ↔ поля страницы (saved mapping, exact label, exact alias)
 - `PageFieldSignature` для устойчивых сохранённых связей
-- UI: выбор профиля, свойства, сопоставления, «Запомнить»
+- UI: выбор профиля, свойства (1000+ с поиском), сопоставления, «Запомнить»
+
+### Реальный XLSX-каталог
+
+FieldPilot автоматически распознаёт колонки:
+
+| Колонка в Excel | Поле профиля |
+|-----------------|--------------|
+| Название | `name` |
+| Симв. код | `externalId` |
+| Сортировка | `sourceOrder` |
+| # | `sourceIndex` |
+
+При повторном импорте того же каталога свойства сопоставляются по **`externalId`**, а не по названию — внутренние ID и mappings сохраняются. Одинаковые названия с разными `externalId` (например PARAM2226 и PARAM2248) остаются разными свойствами.
 
 ## Pipeline
 

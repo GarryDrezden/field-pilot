@@ -18,13 +18,16 @@ export interface ProfileProperty {
   name: string;
   unit?: string;
   aliases: string[];
+  sourceOrder?: number;
+  sourceIndex?: number;
 }
 
 export interface PropertyPageMapping {
   propertyId: string;
   fieldSignature: PageFieldSignature;
-  source: 'manual' | 'exact-label';
+  source: 'manual' | 'exact-label' | 'exact-alias';
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface FieldProfile {
@@ -53,13 +56,32 @@ export interface ImportedPropertyDraft {
   externalId?: string;
   unit?: string;
   aliases?: string[];
+  sourceOrder?: number;
+  sourceIndex?: number;
 }
 
-export interface ImportDuplicateReport {
+export interface ImportValidationReport {
+  totalRows: number;
+  valid: number;
+  missingName: number;
+  missingExternalId: number;
+  duplicateExternalIds: number;
+  duplicateNames: number;
+  duplicateExternalIdList: string[];
+}
+
+export interface CatalogMergeReport {
   added: number;
-  duplicates: number;
+  updated: number;
+  unchanged: number;
+  conflicts: number;
+  missingFromImport: number;
   invalid: number;
-  errors: string[];
+}
+
+export interface CatalogMergeResult {
+  properties: ProfileProperty[];
+  report: CatalogMergeReport;
 }
 
 export type MappingFilter = 'all' | 'linked' | 'unlinked';
@@ -79,8 +101,11 @@ export interface PropertyMappingRow {
 export interface ProfileMatchSummary {
   pageFieldCount: number;
   profilePropertyCount: number;
-  matchedOnPageCount: number;
-  savedMappingCount: number;
-  needsAssignmentCount: number;
+  linkedCount: number;
+  exactLabelCount: number;
+  exactAliasCount: number;
+  manualCount: number;
+  ambiguousCount: number;
+  notOnPageCount: number;
   rows: PropertyMappingRow[];
 }

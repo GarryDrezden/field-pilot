@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.2 (Profiles & Property Catalog)  
-**Milestone:** v0.1 foundation + локальные профили и exact matching профиль ↔ поля страницы.
+**Версия:** v0.2.0 (Profiles & Property Catalog + XLSX)  
+**Milestone:** v0.1 foundation + локальные профили, XLSX-каталог, exact matching профиль ↔ поля страницы.
 
 ### Что уже работает
 
@@ -18,7 +18,8 @@
 - Загрузка PDF / DOCX, локальный парсинг
 - Form Scanner: input, textarea, select + label resolver
 - Preview извлечённого текста
-- **Профили:** каталог свойств, import/export JSON, CSV/TSV/TXT
+- **Профили:** каталог свойств, import/export JSON, **XLSX**, CSV/TSV/TXT
+- **Reimport по externalId** — mappings сохраняются при обновлении каталога
 - **Exact matching:** saved mapping, exact label, exact alias
 - **PageFieldSignature** для восстановления связей на новой странице
 - Unit-тесты: scanner, label, pageAccess, profile import/matcher
@@ -63,6 +64,8 @@ src/
 | `src/background/index.ts` | Клик по иконке, inject, проверка restricted URL |
 | `src/content/index.tsx` | Shadow DOM + React mount |
 | `src/document/pdf/setupPdfjs.ts` | Конфиг PDF.js worker |
+| `src/profile/profileXlsxImport.ts` | XLSX parse (SheetJS) |
+| `src/profile/profileImport.ts` | Column mapping, catalog merge by externalId |
 | `src/profile/profileStorage.ts` | chrome.storage.local, CRUD профилей |
 | `src/profile/profileMatcher.ts` | Exact matching profile ↔ page |
 | `src/profile/fieldSignature.ts` | PageFieldSignature build/resolve |
@@ -94,10 +97,10 @@ Load unpacked: папка **`dist/`**
 - Не работает на `chrome://`, Web Store (by design)
 - PDF без text layer → предупреждение, OCR позже
 - checkbox/radio не сканируются
-- `content.js` ~1.1 MB (pdfjs + mammoth + React + profiles)
+- `content.js` ~1.46 MB (pdfjs + mammoth + React + xlsx + profiles)
 - Document → profile matching не реализован
 - Только exact matching (без fuzzy)
-- externalId пока не участвует в auto-match (кроме хранения)
+- externalId используется для identity каталога, не для auto-match с DOM
 
 ---
 
@@ -157,6 +160,17 @@ Load unpacked: папка **`dist/`**
 - Exact matching: saved → exact label → exact alias
 - Тесты: normalizePropertyLabel, profileImport, profileMatcher (+ fieldSignature)
 - Bundle: `content.js` ~1112 KB (+30 KB к v0.1)
+
+### 2026-08-27 — v0.2.0 XLSX catalog import
+
+**Локально (не закоммичено по умолчанию)**
+
+- XLSX import через `xlsx` (SheetJS), preview перед импортом
+- Identity по `externalId`: reimport сохраняет internal id и mappings
+- Duplicate names (PARAM2226 / PARAM2248) — два свойства
+- Real file verified: 1182 properties, 1182 unique externalIds
+- `sourceOrder`, `sourceIndex` из колонок «Сортировка» и «#»
+- Bundle: `content.js` ~1459 KB (+~347 KB vs v0.2 без xlsx)
 
 ---
 
