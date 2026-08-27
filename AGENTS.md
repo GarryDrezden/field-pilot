@@ -218,7 +218,7 @@ Load unpacked: папка **`dist/`**
 
 ### 2026-08-27 — v0.3.1 Document Workspace / Session
 
-**Коммит:** (pending)
+**Коммит:** `12648f7`
 
 - Версия 0.3.1: corrupt session cleanup, restore UX, session persist errors
 - Дополнительные unit tests для session roundtrip и legacy `file` alias
