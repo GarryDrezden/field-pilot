@@ -139,14 +139,19 @@ FillPlan только из `getFillReadyMatches()` — semantic matching не д
 
 ---
 
-## v0.7 — ChatGPT Bridge (CURRENT)
+## v0.7 — ChatGPT Bridge ✅
 
-- [ ] prompt + clipboard + import JSON ответа
-- [ ] без API key, без автоматизации chatgpt.com
+- [x] manual prompt copy + JSON paste workflow (no API, no automation)
+- [x] full profile catalog in compact JSON prompt
+- [x] strict response validation + preview
+- [x] explicit apply per suggestion (no auto-override of local HIGH)
+- [x] bridge state in DocumentSession v3 (`chrome.storage.session`)
+
+**Результат:** optional AI-assisted matching для 🟡/🔴 без изменения local matcher default.
 
 ---
 
-## v0.8 — Difficult Documents
+## v0.8 — Difficult Documents (CURRENT)
 
 - [ ] OCR для scanned PDF
 - [ ] улучшенные таблицы, сложная вёрстка документов

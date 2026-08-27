@@ -1,12 +1,22 @@
+import type { ChatGptBridgeSessionState } from '../bridge/chatgpt/types';
 import type { ExtractionResult } from '../extraction/types';
 import type { MatchReviewDecision, DocumentMatchReviewState } from '../matching/types';
+import { parseBridgeSessionState } from '../bridge/chatgpt/bridgeSession';
+import { EMPTY_BRIDGE_SESSION } from '../bridge/chatgpt/types';
 import {
   DOCUMENT_SESSION_SCHEMA_VERSION,
   DOCUMENT_SESSION_SCHEMA_VERSION_V1,
+  DOCUMENT_SESSION_SCHEMA_VERSION_V2,
   DOCUMENT_SESSION_STORAGE_KEY,
   type DocumentSession,
   type DocumentSessionFileMeta,
 } from './types';
+
+export interface BuildDocumentSessionOptions {
+  matchReview?: DocumentMatchReviewState;
+  chatGptBridge?: ChatGptBridgeSessionState;
+  createdAt?: string;
+}
 
 export function isSessionStorageAvailable(): boolean {
   return typeof chrome !== 'undefined' && Boolean(chrome.storage?.session);
@@ -16,8 +26,13 @@ export function buildDocumentSession(
   fileMeta: DocumentSessionFileMeta,
   extraction: ExtractionResult,
   textExtracted: boolean,
-  matchReview?: DocumentMatchReviewState,
+  options?: BuildDocumentSessionOptions | DocumentMatchReviewState,
 ): DocumentSession {
+  const resolvedOptions: BuildDocumentSessionOptions =
+    options && 'profileId' in options && 'decisions' in options
+      ? { matchReview: options }
+      : (options ?? {});
+
   return {
     schemaVersion: DOCUMENT_SESSION_SCHEMA_VERSION,
     fileMeta,
@@ -25,8 +40,9 @@ export function buildDocumentSession(
     extractionWarnings: extraction.warnings,
     extractionStats: extraction.stats,
     textExtracted,
-    createdAt: new Date().toISOString(),
-    matchReview,
+    createdAt: resolvedOptions.createdAt ?? new Date().toISOString(),
+    matchReview: resolvedOptions.matchReview,
+    chatGptBridge: resolvedOptions.chatGptBridge ?? { ...EMPTY_BRIDGE_SESSION },
   };
 }
 
@@ -40,6 +56,7 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
   };
   if (
     session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION &&
+    session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION_V2 &&
     session.schemaVersion !== DOCUMENT_SESSION_SCHEMA_VERSION_V1
   ) {
     return null;
@@ -59,6 +76,7 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
   }
 
   const matchReview = parseMatchReview(session.matchReview);
+  const chatGptBridge = parseBridgeSessionState(session.chatGptBridge);
 
   return {
     schemaVersion: DOCUMENT_SESSION_SCHEMA_VERSION,
@@ -79,6 +97,7 @@ export function parseDocumentSession(raw: unknown): DocumentSession | null {
     textExtracted: Boolean(session.textExtracted),
     createdAt: typeof session.createdAt === 'string' ? session.createdAt : new Date().toISOString(),
     matchReview,
+    chatGptBridge,
   };
 }
 

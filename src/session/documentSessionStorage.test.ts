@@ -81,6 +81,40 @@ describe('documentSessionStorage', () => {
     expect(json.includes('mappings')).toBe(false);
   });
 
+  it('roundtrips chatgpt bridge state in session v3', () => {
+    const session = buildDocumentSession(
+      { name: 'harsle.pdf', type: 'pdf' },
+      extractionFromSession(sampleSession),
+      true,
+      {
+        chatGptBridge: {
+          activeRequest: {
+            schemaVersion: 1,
+            requestId: 'req-1',
+            profileId: 'profile-1',
+            documentSessionCreatedAt: '2026-01-01T00:00:00.000Z',
+            scope: 'review-only',
+            characteristicIds: ['c1'],
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+          pendingSuggestions: [
+            {
+              characteristicId: 'c1',
+              propertyId: 'p10',
+              confidence: 'review',
+              reason: 'AI suggestion',
+            },
+          ],
+          responseDraft: '{"schemaVersion":1}',
+        },
+      },
+    );
+    const restored = parseDocumentSession(JSON.parse(serializeDocumentSession(session)));
+    expect(restored?.schemaVersion).toBe(DOCUMENT_SESSION_SCHEMA_VERSION);
+    expect(restored?.chatGptBridge?.activeRequest?.requestId).toBe('req-1');
+    expect(restored?.chatGptBridge?.pendingSuggestions).toHaveLength(1);
+  });
+
   it('restores file metadata on roundtrip', () => {
     const json = serializeDocumentSession(sampleSession);
     const restored = deserializeDocumentSession(json);

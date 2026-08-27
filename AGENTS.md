@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.6.0 (Persistent Learning)  
-**Milestone:** явное сохранение document terminology → ProfileProperty per profile.
+**Версия:** v0.7.0 (ChatGPT Bridge)  
+**Milestone:** manual AI-assisted document→profile matching via clipboard.
 
 ### Что уже работает
 
@@ -27,11 +27,13 @@
 - **Document → Profile matching:** RU/EN lexicon, unit-aware scoring, manual review
 - **Fill engine:** FillPlan, preview, safe write, select, existing-value protection, undo
 - **Persistent learning:** `LearnedDocumentMapping`, «Запомнить соответствие», словарь правил
-- Unit-тесты: extraction, session, matching, fill, learning, scanner, profile import/matcher
+- **ChatGPT Bridge:** manual prompt copy + JSON paste, validation, preview (no API/automation)
+- Unit-тесты: extraction, session, matching, fill, learning, bridge, scanner, profile import/matcher
 
 ### Что НЕ реализовано (не начинать без запроса)
 
-- Fuzzy / AI / OCR / ChatGPT Bridge (v0.7+)
+- Fuzzy local matching / OCR (v0.8+)
+- OpenAI API integration
 - Bitrix-specific / site-specific код
 
 ---
@@ -71,6 +73,7 @@ src/
   session/          document session (chrome.storage.session)
   matching/         matchDocumentToProfile, review, collisions
   learning/         LearnedDocumentMapping CRUD + matcher integration
+  bridge/chatgpt/   manual prompt/response bridge (clipboard only)
   fill/             buildFillPlan, executeFill, undo, DOM adapter
   form/             formScanner, labelResolver
   profile/          storage, import, export, matcher, fieldSignature
@@ -111,6 +114,9 @@ src/
 | `src/learning/learnedMappings.ts` | Learned mapping domain + upsert/replace |
 | `src/learning/applyLearnedMatch.ts` | Learned priority in matcher |
 | `src/ui/components/LearnedDictionaryPanel.tsx` | Management UI словаря |
+| `src/bridge/chatgpt/buildChatGptPrompt.ts` | Bridge prompt builder |
+| `src/bridge/chatgpt/validateChatGptResponse.ts` | Strict JSON validation |
+| `src/ui/components/ChatGptBridgeSection.tsx` | Bridge UI in matching workspace |
 | `src/fill/executeFill.ts` | DOM write + verify + undo batch |
 | `src/fill/setFieldValue.ts` | native setter + input/change events |
 | `src/ui/components/FillSection.tsx` | Fill preview / execute / undo UI |
@@ -236,6 +242,13 @@ Load unpacked: папка **`dist/`**
 - Conservative prose rejection; structured lines с `Max.` abbreviations
 - HARSLE PB-2000 PDF acceptance: 29 candidates, key technical params found
 - Tests: 55 total (+27); bundle ~1473 KB (+~14 KB vs v0.2.0)
+
+### 2026-08-27 — v0.7.0 ChatGPT Bridge
+
+- `src/bridge/chatgpt/*` — prompt builder, parse/validate, scope selection, preview
+- DocumentSession schema v3 with bridge request/suggestions in session storage
+- UI: `ChatGptBridgeSection` in matching workspace
+- Tests: bridge validation, scope, session roundtrip (+8)
 
 ### 2026-08-27 — v0.6.0 Persistent Learning
 

@@ -792,3 +792,65 @@
   font-size: 13px;
 }
 
+.fp-bridge-section {
+  margin-top: 12px;
+}
+
+.fp-bridge-intro {
+  font-size: 12px;
+  color: #475569;
+  margin: 8px 0;
+}
+
+.fp-bridge-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #475569;
+  margin: 8px 0;
+}
+
+.fp-bridge-steps {
+  margin: 8px 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.fp-bridge-response {
+  width: 100%;
+  min-height: 120px;
+  margin: 8px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+.fp-bridge-preview-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fp-bridge-preview-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.fp-bridge-preview-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.fp-status.is-warning {
+  color: #b45309;
+}
+

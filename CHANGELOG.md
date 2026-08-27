@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-08-27
+
+### Added
+
+- Manual ChatGPT Bridge for document→profile matching (clipboard-only workflow)
+- Compact prompt builder with full profile catalog serialization
+- Strict JSON response validation + preview before apply
+- Bridge request/suggestions persistence in `chrome.storage.session` (DocumentSession v3)
+- Scope selector: review-only (default) or all characteristics
+
+### Safety
+
+- No OpenAI API, no host permissions, no ChatGPT automation
+- AI suggestions never auto-override local HIGH matches
+- Explicit user action required to apply each suggestion
+- Bridge is page-independent (no PageField/URL/DOM in prompt)
+
 ## [0.6.0] — 2026-08-27
 
 ### Added

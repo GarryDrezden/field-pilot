@@ -4,6 +4,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { startBridgeRequest } from '../../bridge/chatgpt/bridgeSession';
+import type { ChatGptBridgeScope } from '../../bridge/chatgpt/types';
+import { EMPTY_BRIDGE_SESSION } from '../../bridge/chatgpt/types';
 import { parseDocumentFile } from '../../document/parseDocument';
 import { extractCharacteristics } from '../../extraction/extractCharacteristics';
 import type { ExtractionResult } from '../../extraction/types';
@@ -19,6 +22,7 @@ import {
   getDocumentSession,
   isSessionStorageAvailable,
   saveDocumentSession,
+  type BuildDocumentSessionOptions,
 } from '../../session/documentSessionStorage';
 import type { DocumentSessionFileMeta } from '../../session/types';
 import { detectDocumentFormat } from '../../shared/utils';
@@ -38,30 +42,31 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [restoredFromSession, setRestoredFromSession] = useState(false);
   const [sessionPersistError, setSessionPersistError] = useState(false);
   const [matchReview, setMatchReview] = useState<DocumentMatchReviewState | null>(null);
+  const [sessionCreatedAt, setSessionCreatedAt] = useState<string | null>(null);
+  const [chatGptBridge, setChatGptBridge] = useState(EMPTY_BRIDGE_SESSION);
 
   const persistCurrentSession = useCallback(
     async (
       nextFileMeta: DocumentSessionFileMeta,
       nextExtraction: ExtractionResult,
       nextTextExtracted: boolean,
-      nextMatchReview?: DocumentMatchReviewState | null,
+      options?: BuildDocumentSessionOptions,
     ) => {
       if (!isSessionStorageAvailable()) {
         return false;
       }
 
       const saved = await saveDocumentSession(
-        buildDocumentSession(
-          nextFileMeta,
-          nextExtraction,
-          nextTextExtracted,
-          nextMatchReview ?? undefined,
-        ),
+        buildDocumentSession(nextFileMeta, nextExtraction, nextTextExtracted, {
+          matchReview: options?.matchReview ?? matchReview ?? undefined,
+          chatGptBridge: options?.chatGptBridge ?? chatGptBridge,
+          createdAt: options?.createdAt ?? sessionCreatedAt ?? undefined,
+        }),
       );
       setSessionPersistError(!saved);
       return saved;
     },
-    [],
+    [chatGptBridge, matchReview, sessionCreatedAt],
   );
 
   const restoreSession = useCallback(async () => {
@@ -82,6 +87,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setParseWarnings(session.extractionWarnings);
       setTextExtracted(session.textExtracted);
       setMatchReview(session.matchReview ?? null);
+      setSessionCreatedAt(session.createdAt);
+      setChatGptBridge(session.chatGptBridge ?? { ...EMPTY_BRIDGE_SESSION });
       setFullText(null);
       setStatus('ready');
       setRestoredFromSession(true);
@@ -110,6 +117,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         setExtraction(null);
         setFullText(null);
         setMatchReview(null);
+        setChatGptBridge({ ...EMPTY_BRIDGE_SESSION });
+        setSessionCreatedAt(null);
         setFileMeta({ name: file.name, type: 'pdf', size: file.size });
         return;
       }
@@ -120,6 +129,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setRestoredFromSession(false);
       setSessionPersistError(false);
       setMatchReview(null);
+      setChatGptBridge({ ...EMPTY_BRIDGE_SESSION });
 
       try {
         const result = await parseDocumentFile(file);
@@ -137,9 +147,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         try {
           const nextExtraction = extractCharacteristics(result);
           setExtraction(nextExtraction);
-          await persistCurrentSession(nextFileMeta, nextExtraction, nextTextExtracted, null);
+          const createdAt = new Date().toISOString();
+          setSessionCreatedAt(createdAt);
+          await persistCurrentSession(nextFileMeta, nextExtraction, nextTextExtracted, {
+            matchReview: undefined,
+            chatGptBridge: { ...EMPTY_BRIDGE_SESSION },
+            createdAt,
+          });
         } catch (error) {
           setExtraction(null);
+          setSessionCreatedAt(null);
           setExtractionError(
             error instanceof Error ? error.message : 'Не удалось извлечь характеристики.',
           );
@@ -153,6 +170,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         setExtraction(null);
         setFullText(null);
         setMatchReview(null);
+        setChatGptBridge({ ...EMPTY_BRIDGE_SESSION });
+        setSessionCreatedAt(null);
         await clearDocumentSession();
       }
     },
@@ -166,6 +185,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     setParseWarnings([]);
     setTextExtracted(false);
     setMatchReview(null);
+    setChatGptBridge({ ...EMPTY_BRIDGE_SESSION });
+    setSessionCreatedAt(null);
     setStatus('idle');
     setErrorMessage(null);
     setExtractionError(null);
@@ -186,7 +207,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
           : createEmptyReviewState(profileId);
       const nextReview = upsertReviewDecision(baseState, characteristicId, decision);
       setMatchReview(nextReview);
-      await persistCurrentSession(fileMeta, extraction, textExtracted, nextReview);
+      await persistCurrentSession(fileMeta, extraction, textExtracted, { matchReview: nextReview });
     },
     [extraction, fileMeta, matchReview, persistCurrentSession, textExtracted],
   );
@@ -204,10 +225,82 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
       const nextReview = createEmptyReviewState(profileId);
       setMatchReview(nextReview);
-      await persistCurrentSession(fileMeta, extraction, textExtracted, nextReview);
+      await persistCurrentSession(fileMeta, extraction, textExtracted, { matchReview: nextReview });
     },
     [extraction, fileMeta, matchReview, persistCurrentSession, textExtracted],
   );
+
+  const setBridgeResponseDraft = useCallback(
+    async (draft: string) => {
+      if (!fileMeta || !extraction) {
+        return;
+      }
+      const nextBridge = { ...chatGptBridge, responseDraft: draft };
+      setChatGptBridge(nextBridge);
+      await persistCurrentSession(fileMeta, extraction, textExtracted, { chatGptBridge: nextBridge });
+    },
+    [chatGptBridge, extraction, fileMeta, persistCurrentSession, textExtracted],
+  );
+
+  const prepareBridgeRequest = useCallback(
+    async (
+      scope: ChatGptBridgeScope,
+      characteristicIds: string[],
+      profileId: string,
+      profileUpdatedAt?: string,
+    ) => {
+      if (!extraction || !sessionCreatedAt || characteristicIds.length === 0) {
+        return null;
+      }
+
+      const nextBridge = startBridgeRequest({
+        profileId,
+        profileUpdatedAt,
+        documentSessionCreatedAt: sessionCreatedAt,
+        scope,
+        characteristicIds,
+      });
+
+      if (fileMeta) {
+        setChatGptBridge(nextBridge);
+        await persistCurrentSession(fileMeta, extraction, textExtracted, { chatGptBridge: nextBridge });
+      } else {
+        setChatGptBridge(nextBridge);
+      }
+
+      return nextBridge.activeRequest;
+    },
+    [extraction, fileMeta, persistCurrentSession, sessionCreatedAt, textExtracted],
+  );
+
+  const saveBridgeValidation = useCallback(
+    async (
+      suggestions: import('../../bridge/chatgpt/types').ChatGptBridgeSuggestion[],
+      responseDraft: string,
+    ) => {
+      if (!fileMeta || !extraction) {
+        return;
+      }
+      const nextBridge = {
+        ...chatGptBridge,
+        pendingSuggestions: suggestions.length > 0 ? suggestions : null,
+        responseDraft,
+      };
+      setChatGptBridge(nextBridge);
+      await persistCurrentSession(fileMeta, extraction, textExtracted, { chatGptBridge: nextBridge });
+    },
+    [chatGptBridge, extraction, fileMeta, persistCurrentSession, textExtracted],
+  );
+
+  const clearBridgePending = useCallback(async () => {
+    if (!fileMeta || !extraction) {
+      setChatGptBridge((current) => ({ ...current, pendingSuggestions: null }));
+      return;
+    }
+    const nextBridge = { ...chatGptBridge, pendingSuggestions: null };
+    setChatGptBridge(nextBridge);
+    await persistCurrentSession(fileMeta, extraction, textExtracted, { chatGptBridge: nextBridge });
+  }, [chatGptBridge, extraction, fileMeta, persistCurrentSession, textExtracted]);
 
   const value: DocumentContextValue = {
     loading,
@@ -222,10 +315,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     restoredFromSession,
     sessionPersistError,
     matchReview,
+    sessionCreatedAt,
+    chatGptBridge,
     loadFile,
     clearDocument,
     setReviewDecision,
     resetMatchReviewForProfile,
+    setBridgeResponseDraft,
+    prepareBridgeRequest,
+    saveBridgeValidation,
+    clearBridgePending,
   };
 
   return <DocumentContext.Provider value={value}>{children}</DocumentContext.Provider>;

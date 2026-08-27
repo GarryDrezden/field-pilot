@@ -58,6 +58,13 @@ FieldPilot автоматически распознаёт колонки:
 
 При повторном импорте того же каталога свойства сопоставляются по **`externalId`**, а не по названию — внутренние ID и mappings сохраняются. Одинаковые названия с разными `externalId` (например PARAM2226 и PARAM2248) остаются разными свойствами.
 
+### v0.7 — ChatGPT Bridge
+
+- Manual workflow: copy prompt → paste in ChatGPT → paste JSON back
+- Full profile catalog in compact JSON prompt (~1182 properties supported)
+- Strict validation, preview, explicit apply per suggestion
+- **No API**, no automation, no new host permissions
+
 ### v0.6 — Persistent Learning
 
 - `LearnedDocumentMapping`: explicit document term → ProfileProperty (per profile)

@@ -8,6 +8,7 @@ import {
   PropertyPicker,
 } from './DocumentMatchRow';
 import { LearnedMappingConflictDialog } from './LearnedMappingConflictDialog';
+import { ChatGptBridgeSection } from './ChatGptBridgeSection';
 import { formatCharacteristicValue, formatSourcePreview } from './matchRowUtils';
 
 type MatchFilter = 'all' | 'high' | 'review' | 'reject' | 'ignored' | 'learned';
@@ -171,6 +172,8 @@ export function ProfileMatchingSection() {
       </div>
 
       {learnFeedback && <p className="fp-status is-ready">{learnFeedback}</p>}
+
+      <ChatGptBridgeSection />
 
       <div className="fp-toolbar">
         <input
