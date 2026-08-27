@@ -218,7 +218,7 @@ Load unpacked: папка **`dist/`**
 
 ### 2026-08-27 — v0.3 refinement: page-independent document flow
 
-**Локально (не закоммичено по умолчанию)**
+**Коммит:** `248dbb1`
 
 - Архитектура: Document / Profile / Current Page как независимые слои
 - `src/session/*` — DocumentSession в `chrome.storage.session`
