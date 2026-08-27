@@ -17,7 +17,7 @@ chrome.action.onClicked.addListener(async (tab) => {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ['content.js'],
+      files: ['bootstrap.js'],
     });
   } catch (error) {
     console.error('[FieldPilot] Failed to inject content script:', error);

@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch --mode development",
-    "build": "node scripts/generate-icons.mjs && tsc -b && vite build && node scripts/copy-assets.mjs",
+    "dev": "vite build --watch --config vite.background.config.ts & vite build --watch --config vite.content.config.ts",
+    "build": "node scripts/generate-icons.mjs && tsc -b && vite build --config vite.background.config.ts && vite build --config vite.content.config.ts && vite build --config vite.bootstrap.config.ts && node scripts/copy-assets.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
