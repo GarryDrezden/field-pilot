@@ -54,6 +54,7 @@ function mapElementToField(
     inputType: element instanceof HTMLInputElement ? element.type : undefined,
     label: resolveFieldLabel(element),
     name: element.getAttribute('name') ?? undefined,
+    htmlId: element.getAttribute('id') ?? undefined,
     placeholder: element.getAttribute('placeholder') ?? undefined,
     currentValue: getCurrentValue(element),
     disabled: element.disabled,

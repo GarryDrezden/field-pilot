@@ -6,6 +6,7 @@ export interface FormField {
   inputType?: string;
   label: string;
   name?: string;
+  htmlId?: string;
   placeholder?: string;
   currentValue?: string;
   disabled: boolean;

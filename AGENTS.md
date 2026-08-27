@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.1 (Foundation)  
-**Milestone:** базовая архитектура работает на реальных страницах (проверено на Bitrix admin).
+**Версия:** v0.2 (Profiles & Property Catalog)  
+**Milestone:** v0.1 foundation + локальные профили и exact matching профиль ↔ поля страницы.
 
 ### Что уже работает
 
@@ -18,13 +18,17 @@
 - Загрузка PDF / DOCX, локальный парсинг
 - Form Scanner: input, textarea, select + label resolver
 - Preview извлечённого текста
-- Unit-тесты: labelResolver, formScanner, pageAccess
+- **Профили:** каталог свойств, import/export JSON, CSV/TSV/TXT
+- **Exact matching:** saved mapping, exact label, exact alias
+- **PageFieldSignature** для восстановления связей на новой странице
+- Unit-тесты: scanner, label, pageAccess, profile import/matcher
 
 ### Что НЕ реализовано (не начинать без запроса)
 
-- Сопоставление характеристик с полями (v0.3)
-- Заполнение полей (v0.4)
-- AI / OCR / ChatGPT Bridge
+- Извлечение характеристик из документа (v0.3)
+- Document → profile matching (v0.4)
+- Заполнение полей (v0.5)
+- Fuzzy / AI / OCR / ChatGPT Bridge
 - Bitrix-specific / site-specific код
 
 ---
@@ -38,6 +42,7 @@ src/
   ui/               React-компоненты панели
   document/pdf|docx parsers → DocumentParseResult
   form/             formScanner, labelResolver
+  profile/          storage, import, export, matcher, fieldSignature
   shared/           types, utils
 ```
 
@@ -58,7 +63,10 @@ src/
 | `src/background/index.ts` | Клик по иконке, inject, проверка restricted URL |
 | `src/content/index.tsx` | Shadow DOM + React mount |
 | `src/document/pdf/setupPdfjs.ts` | Конфиг PDF.js worker |
-| `src/form/labelResolver.ts` | Подписи полей (label, table cell, aria…) |
+| `src/profile/profileStorage.ts` | chrome.storage.local, CRUD профилей |
+| `src/profile/profileMatcher.ts` | Exact matching profile ↔ page |
+| `src/profile/fieldSignature.ts` | PageFieldSignature build/resolve |
+| `src/ui/context/ProfileContext.tsx` | React state для профилей |
 | `vite.content.config.ts` | IIFE-сборка content + strip import.meta |
 | `scripts/generate-icons.mjs` | PNG-иконки 16/48/128 |
 | `scripts/verify-build.mjs` | Проверка: нет import.meta, есть worker |
@@ -81,13 +89,15 @@ Load unpacked: папка **`dist/`**
 
 ---
 
-## Известные ограничения v0.1
+## Известные ограничения
 
-- Не работает на `chrome://`, Web Store и других restricted pages (by design)
+- Не работает на `chrome://`, Web Store (by design)
 - PDF без text layer → предупреждение, OCR позже
 - checkbox/radio не сканируются
-- `content.js` ~1 MB (pdfjs + mammoth + React)
-- Большие PDF могут кратковременно подвешивать UI
+- `content.js` ~1.1 MB (pdfjs + mammoth + React + profiles)
+- Document → profile matching не реализован
+- Только exact matching (без fuzzy)
+- externalId пока не участвует в auto-match (кроме хранения)
 
 ---
 
@@ -136,6 +146,17 @@ Load unpacked: папка **`dist/`**
 
 - Переработан `scripts/generate-icons.mjs`: pixel-art иконка «документ → стрелка → поле формы»
 - Синий градиент, белые элементы, размеры 16/48/128
+
+### 2026-08-27 — v0.2 Profiles & Property Catalog
+
+**Коммит:** _(will be set after commit)_
+
+- `src/profile/*` — типы, storage (`schemaVersion: 1`), import/export, matcher
+- `PageFieldSignature` — name, htmlId, normalizedLabel, elementType (не runtime fp-field id)
+- UI: ProfileBar, свойства, импорт, сопоставления, «Запомнить»
+- Exact matching: saved → exact label → exact alias
+- Тесты: normalizePropertyLabel, profileImport, profileMatcher (+ fieldSignature)
+- Bundle: `content.js` ~1112 KB (+30 KB к v0.1)
 
 ---
 

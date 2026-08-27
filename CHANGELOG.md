@@ -6,8 +6,11 @@
 
 ### Added
 
-- Иконки расширения: документ → стрелка → поле формы (`scripts/generate-icons.mjs`)
-- `AGENTS.md` — контекст и журнал для AI-ассистентов
+- v0.2 Profiles: `FieldProfile`, property catalog, `chrome.storage.local`
+- Import: JSON, CSV, TSV, TXT / paste; export profile JSON
+- Exact profile ↔ page matching + `PageFieldSignature`
+- UI: profile selector, properties CRUD, mappings screen
+- Tests: normalizePropertyLabel, profileImport, profileMatcher
 
 ## [0.1.0] — 2026-08-27
 

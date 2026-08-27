@@ -18,29 +18,47 @@ FieldPilot должен сократить этот процесс до:
 
 При этом окончательное сохранение страницы всегда остаётся за пользователем.
 
-## Что работает сейчас (v0.1)
+## Profile (профиль)
 
-- Manifest V3 для Chromium-браузеров
-- Запуск панели FieldPilot по клику на иконку расширения
-- Выезжающая панель справа поверх страницы (Shadow DOM, изоляция CSS)
-- Загрузка PDF и DOCX (drag & drop и выбор файла)
-- Локальный разбор PDF через PDF.js
-- Локальный разбор DOCX через Mammoth
-- Единый формат `DocumentParseResult`
-- Сканирование полей страницы (`input`, `textarea`, `select`)
-- Определение подписи поля (label, aria, табличная вёрстка и др.)
-- Preview извлечённого текста документа
-- ESLint, TypeScript strict, unit-тесты для scanner/label resolver
+**FieldPilot profile** — локальный каталог свойств, который выступает промежуточным слоем между терминологией документа и полями веб-страницы.
+
+Профиль не привязан к URL, CMS или конкретному сайту. Пользователь сам выбирает активный профиль и связывает свойства каталога с полями HTML-формы. FieldPilot не добавляет найденные поля страницы в профиль автоматически.
+
+## Что работает сейчас
+
+### v0.1 — Foundation
+
+- Manifest V3, drawer panel (Shadow DOM), PDF/DOCX parsing
+- Form Scanner + label resolver
+- Preview извлечённого текста
+
+### v0.2 — Profiles & Property Catalog
+
+- Локальные профили в `chrome.storage.local` (`schemaVersion: 1`)
+- Каталог свойств профиля (name, unit, aliases, externalId)
+- Импорт: JSON, CSV, TSV, TXT / вставка списка
+- Экспорт профиля в JSON
+- Exact matching: профиль ↔ поля страницы (saved mapping, exact label, exact alias)
+- `PageFieldSignature` для устойчивых сохранённых связей
+- UI: выбор профиля, свойства, сопоставления, «Запомнить»
+
+## Pipeline
+
+```text
+Document → extracted characteristic → profile property → current page field
+```
+
+**Сейчас работают:** document parsing (v0.1) и profile property ↔ page field (v0.2).  
+**Следующий шаг:** извлечение характеристик из документа и document → profile matching.
 
 ## Что запланировано
 
-- Извлечение характеристик из документа (v0.2)
-- Сопоставление характеристик с полями формы и confidence score (v0.3)
-- Безопасное заполнение выбранных полей без auto-submit (v0.4)
-- Запоминание пользовательских соответствий (v0.5)
-- ChatGPT Bridge без собственного API (v0.6)
-- OCR и сложные документы (v0.7)
-- Улучшение совместимости с SPA и динамическими формами (v0.8)
+- Извлечение характеристик из документа (v0.3)
+- Document → profile → page matching engine + confidence score (v0.4)
+- Безопасное заполнение выбранных полей без auto-submit (v0.5)
+- Расширенное обучение на исправлениях пользователя (v0.6)
+- ChatGPT Bridge без собственного API (v0.7)
+- OCR и сложные документы (v0.8)
 
 Подробный план — в [ROADMAP.md](ROADMAP.md).
 

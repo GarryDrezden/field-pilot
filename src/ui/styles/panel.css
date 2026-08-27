@@ -222,3 +222,150 @@
 .fp-hidden-input {
   display: none;
 }
+
+.fp-profile-bar {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  display: grid;
+  gap: 10px;
+}
+
+.fp-profile-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fp-profile-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.fp-profile-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fp-select,
+.fp-input,
+.fp-textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.fp-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.fp-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.fp-link-button {
+  border: none;
+  background: none;
+  color: #1d4ed8;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.fp-icon-button {
+  min-width: 36px;
+  padding-inline: 10px;
+}
+
+.fp-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fp-section-header h2 {
+  margin: 0;
+}
+
+.fp-label {
+  display: block;
+  margin: 12px 0 6px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.fp-simple-list,
+.fp-property-list,
+.fp-mapping-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.fp-property-item,
+.fp-mapping-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 8px;
+}
+
+.fp-mapping-item {
+  grid-template-columns: 1fr auto;
+}
+
+.fp-mapping-property {
+  font-weight: 600;
+}
+
+.fp-mapping-arrow {
+  display: none;
+}
+
+.fp-mapping-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.fp-mapping-stats {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
+.fp-toolbar {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fp-import-mapping {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #eff6ff;
+}
+
