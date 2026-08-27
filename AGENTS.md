@@ -221,6 +221,8 @@ Load unpacked: папка **`dist/`**
 
 ### 2026-08-27 — v0.4.0 Document → Profile Matching
 
+**Коммит:** `083ab78`
+
 - `src/matching/*` — deterministic bilingual matcher, unit-aware scoring, conflicts
 - UI: сопоставление с профилем, manual review, property picker
 - DocumentSession v2: review decisions в `chrome.storage.session`
