@@ -129,7 +129,27 @@ function splitLineByColumnGap(
     return [sorted];
   }
 
+  if (shouldPreventColumnSplit(left, right)) {
+    return [sorted];
+  }
+
   return [left, right];
+}
+
+function shouldPreventColumnSplit(left: PdfTextSpan[], right: PdfTextSpan[]): boolean {
+  const leftText = joinSpans([...left].sort((a, b) => a.x - b.x));
+  const rightText = joinSpans([...right].sort((a, b) => a.x - b.x));
+  const trimmedRight = rightText.trim();
+
+  if (/^\d+[.)]\s/.test(leftText) && /^[●*]/.test(trimmedRight)) {
+    return true;
+  }
+
+  if (/^\d+[.)]\s/.test(leftText) && !/[●*/]/.test(leftText) && /^[●*]/.test(trimmedRight)) {
+    return true;
+  }
+
+  return false;
 }
 
 export function reconstructPdfLines(

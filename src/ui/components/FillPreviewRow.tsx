@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { FillOperation } from '../../fill/types';
 import { fillStatusLabel } from '../../fill/buildFillPlan';
+import { copyTextToClipboard } from '../../shared/utils/clipboard';
 
 interface FillPreviewRowProps {
   operation: FillOperation;
@@ -20,10 +22,21 @@ export function FillPreviewRow({
   sourcePreview,
   onConfigureField,
 }: FillPreviewRowProps) {
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const selectable =
     operation.status === 'ready' ||
     (operation.status === 'existing-value' && operation.allowOverwrite);
   const showOverwriteToggle = operation.status === 'existing-value';
+
+  const showCopyValue =
+    operation.status === 'no-page-field' ||
+    operation.status === 'unsupported-field' ||
+    operation.status === 'ambiguous-page-field';
+
+  async function handleCopyValue(): Promise<void> {
+    const copied = await copyTextToClipboard(operation.displayValue || operation.value);
+    setCopyStatus(copied ? 'Значение скопировано.' : 'Не удалось скопировать значение.');
+  }
 
   return (
     <li className={`fp-fill-row is-${operation.status}`}>
@@ -88,7 +101,14 @@ export function FillPreviewRow({
             Настроить поле
           </button>
         )}
+        {showCopyValue && (
+          <button type="button" className="fp-link-button" onClick={() => void handleCopyValue()}>
+            Скопировать значение
+          </button>
+        )}
       </div>
+
+      {copyStatus && <p className="fp-fill-reason">{copyStatus}</p>}
 
       {sourceExpanded && sourcePreview && (
         <pre className="fp-source-preview">{sourcePreview}</pre>

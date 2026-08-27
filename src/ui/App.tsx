@@ -5,6 +5,8 @@ import { PanelHeader } from './components/PanelHeader';
 import { DocumentSection } from './components/DocumentSection';
 import { DocumentCharacteristicsSection } from './components/DocumentCharacteristicsSection';
 import { DocumentDebugSection } from './components/DocumentDebugSection';
+import { DiagnosticSection } from './components/DiagnosticSection';
+import { PanelErrorBoundary } from './components/PanelErrorBoundary';
 import { PageFieldsSection } from './components/PageFieldsSection';
 import { ProfileMatchingSection } from './components/ProfileMatchingSection';
 import { PageProvider } from './context/PageContext';
@@ -36,6 +38,7 @@ function MainScreen() {
       <PageFieldsSection />
       <FillSection />
       <DocumentDebugSection />
+      <DiagnosticSection />
     </>
   );
 }
@@ -67,7 +70,9 @@ export function App({ onClose }: AppProps) {
           <PanelHeader onClose={onClose} />
           {screen === 'main' && <ProfileBar onOpenScreen={setScreen} />}
           <main className="fp-content">
-            <AppContent screen={screen} onOpenScreen={setScreen} />
+            <PanelErrorBoundary>
+              <AppContent screen={screen} onOpenScreen={setScreen} />
+            </PanelErrorBoundary>
           </main>
         </PageProvider>
       </DocumentProvider>

@@ -1,4 +1,5 @@
 import { normalizeWhitespace } from '../shared/utils';
+import type { LabelSource } from '../shared/types/form';
 
 const EXCLUDED_INPUT_TYPES = new Set([
   'hidden',
@@ -12,24 +13,15 @@ const EXCLUDED_INPUT_TYPES = new Set([
 
 export interface LabelCandidate {
   text: string;
-  source:
-    | 'label-for'
-    | 'label-wrap'
-    | 'aria-label'
-    | 'aria-labelledby'
-    | 'container'
-    | 'table-cell'
-    | 'placeholder'
-    | 'name'
-    | 'id';
+  source: LabelSource;
   priority: number;
 }
 
-const SOURCE_PRIORITY: Record<LabelCandidate['source'], number> = {
+const SOURCE_PRIORITY: Record<LabelSource, number> = {
   'label-for': 1,
   'label-wrap': 2,
-  'aria-label': 3,
-  'aria-labelledby': 4,
+  'aria-labelledby': 3,
+  'aria-label': 4,
   container: 5,
   'table-cell': 6,
   placeholder: 7,
@@ -38,13 +30,21 @@ const SOURCE_PRIORITY: Record<LabelCandidate['source'], number> = {
 };
 
 export function resolveFieldLabel(element: HTMLElement): string {
+  return resolveFieldLabelDetails(element).label;
+}
+
+export function resolveFieldLabelDetails(element: HTMLElement): {
+  label: string;
+  source: LabelSource;
+} {
   const candidates = collectLabelCandidates(element);
   if (candidates.length === 0) {
-    return 'Без названия';
+    return { label: 'Без названия', source: 'name' };
   }
 
   candidates.sort((left, right) => left.priority - right.priority);
-  return candidates[0]?.text ?? 'Без названия';
+  const best = candidates[0]!;
+  return { label: best.text, source: best.source };
 }
 
 export function collectLabelCandidates(element: HTMLElement): LabelCandidate[] {

@@ -40,7 +40,7 @@ describe.skipIf(!existsSync(HARSLE_PDF_PATH))('HARSLE acceptance', () => {
     const document = await parseHarslePdf(HARSLE_PDF_PATH);
     const result = extractCharacteristics(document);
 
-    expect(result.stats.total).toBeGreaterThan(15);
+    expect(result.stats.total).toBe(29);
 
     const has = (label: string) =>
       result.characteristics.some((item) => item.sourceLabel.includes(label));
@@ -50,6 +50,10 @@ describe.skipIf(!existsSync(HARSLE_PDF_PATH))('HARSLE acceptance', () => {
     expect(has('Weight')).toBe(true);
     expect(has('Feeding Structure')).toBe(true);
     expect(has('Max. Bending Length')).toBe(true);
+    expect(has('Linear Guide')).toBe(true);
+    expect(has('Ball Screw')).toBe(true);
+    expect(has('Reducer')).toBe(true);
+    expect(has('Bending Tooling')).toBe(true);
 
     const motorPower = result.characteristics.find((item) => item.sourceLabel.includes('Motor Power'));
     expect(motorPower?.rawValue).toBe('61');

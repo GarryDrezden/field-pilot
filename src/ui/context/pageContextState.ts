@@ -6,6 +6,9 @@ export interface PageContextValue {
   isScanning: boolean;
   scanError: string | null;
   hasScanned: boolean;
+  scanGeneration: number;
+  pageStale: boolean;
+  pageUrl: string;
   focusMappingPropertyId: string | null;
   scanPage: () => void;
   rescanPage: () => void;

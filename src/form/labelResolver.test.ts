@@ -34,4 +34,13 @@ describe('labelResolver', () => {
     const input = document.querySelector('input') as HTMLInputElement;
     expect(resolveFieldLabel(input)).toBe('Serial number');
   });
+
+  it('prefers aria-labelledby over aria-label', () => {
+    document.body.innerHTML = `
+      <span id="lbl">Motor power</span>
+      <input aria-labelledby="lbl" aria-label="Fallback label" />
+    `;
+    const input = document.querySelector('input') as HTMLInputElement;
+    expect(resolveFieldLabel(input)).toBe('Motor power');
+  });
 });

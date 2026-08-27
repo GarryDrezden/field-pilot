@@ -6,6 +6,11 @@ import {
   selectAllSafeOperations,
 } from '../../fill/buildFillPlan';
 import { executeFill } from '../../fill/executeFill';
+import {
+  buildFillPlanIdentity,
+  isFillPlanStale,
+  type FillPlanIdentity,
+} from '../../fill/fillPlanIdentity';
 import { undoLastFill } from '../../fill/restoreFill';
 import type { ExtractedCharacteristic } from '../../extraction/types';
 import type { FillExecutionResult, FillOperation, FillUndoBatch } from '../../fill/types';
@@ -18,10 +23,19 @@ import { FillPreviewRow } from './FillPreviewRow';
 type FillView = 'idle' | 'preview' | 'result';
 
 export function FillSection() {
-  const { extraction, matchReview } = useDocument();
+  const { extraction, matchReview, sessionCreatedAt } = useDocument();
   const { activeProfile } = useProfiles();
-  const { fields, isScanning, scanError, hasScanned, scanPage, rescanPage, requestMappingFocus } =
-    usePageContext();
+  const {
+    fields,
+    isScanning,
+    scanError,
+    hasScanned,
+    scanPage,
+    rescanPage,
+    scanGeneration,
+    pageStale,
+    requestMappingFocus,
+  } = usePageContext();
   const { effectiveMatches, stats: matchStats } = useDocumentMatching(
     extraction?.characteristics,
     activeProfile,
@@ -34,6 +48,8 @@ export function FillSection() {
   const [executionResult, setExecutionResult] = useState<FillExecutionResult | null>(null);
   const [undoBatch, setUndoBatch] = useState<FillUndoBatch | null>(null);
   const [undoMessage, setUndoMessage] = useState<string | null>(null);
+  const [previewIdentity, setPreviewIdentity] = useState<FillPlanIdentity | null>(null);
+  const [fillError, setFillError] = useState<string | null>(null);
 
   const fillReadyMatches = useMemo(
     () => getFillReadyMatches(effectiveMatches),
@@ -71,10 +87,18 @@ export function FillSection() {
   const pendingReviewCount = matchStats.review;
 
   function openPreview(): void {
-    if (!basePlan) {
+    if (!basePlan || !activeProfile) {
       return;
     }
     setOperations(basePlan.operations);
+    setPreviewIdentity(
+      buildFillPlanIdentity({
+        documentSessionCreatedAt: sessionCreatedAt,
+        profileId: activeProfile.id,
+        scanGeneration,
+      }),
+    );
+    setFillError(null);
     setView('preview');
     setExecutionResult(null);
     setUndoMessage(null);
@@ -102,9 +126,30 @@ export function FillSection() {
   }
 
   function handleExecuteFill(): void {
+    if (!activeProfile) {
+      return;
+    }
+
+    const currentIdentity = buildFillPlanIdentity({
+      documentSessionCreatedAt: sessionCreatedAt,
+      profileId: activeProfile.id,
+      scanGeneration,
+    });
+    const staleMessage = previewIdentity ? isFillPlanStale(previewIdentity, currentIdentity) : null;
+    if (staleMessage) {
+      setFillError(staleMessage);
+      return;
+    }
+
+    if (pageStale) {
+      setFillError('Страница изменилась. Рекомендуется повторное сканирование перед заполнением.');
+      return;
+    }
+
     const result = executeFill({ operations, scannedFields: fields });
     setExecutionResult(result);
     setUndoBatch(result.undoBatch);
+    setFillError(null);
     setView('result');
     rescanPage();
   }
@@ -159,6 +204,13 @@ export function FillSection() {
       )}
 
       {scanError && <p className="fp-status is-error">{scanError}</p>}
+      {fillError && <p className="fp-status is-error">{fillError}</p>}
+
+      {pageStale && hasScanned && (
+        <p className="fp-status is-error">
+          Страница изменилась. Рекомендуется повторное сканирование.
+        </p>
+      )}
 
       {hasScanned && fields.length === 0 && !scanError && (
         <p className="fp-empty">На странице не найдено поддерживаемых полей.</p>
@@ -260,8 +312,9 @@ export function FillSection() {
       {view === 'result' && executionResult && (
         <>
           <p className="fp-status is-ready">
-            Заполнено: {executionResult.filled} · Пропущено: {executionResult.skipped} · Ошибка:{' '}
-            {executionResult.failed}
+            ✓ Заполнено: {executionResult.filled} · — Уже совпадало:{' '}
+            {operations.filter((item) => item.status === 'already-equal').length} · ↷ Пропущено:{' '}
+            {executionResult.skipped} · ⚠ Ошибка: {executionResult.failed}
           </p>
           <p className="fp-fill-hint">
             Проверьте значения на странице и сохраните форму вручную.

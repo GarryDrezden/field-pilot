@@ -4,6 +4,31 @@
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-08-27
+
+### Fixed
+
+- **HARSLE 29→28 regression:** multi-column PDF split broke numbered configuration rows (`Linear Guide`, `Ball Screw`, `Reducer`); restored via `shouldPreventColumnSplit()` in `reconstructPdfLines.ts`
+- False positives `● HIWIN` / `● ROUIST` removed; `Bending T ooling` artifact replaced by correct `Bending Tooling`
+
+### Improved
+
+- FormScanner: deterministic label priority (`label-for` → wrap → `aria-labelledby` → `aria-label` → container/table → placeholder → name/id)
+- `labelSource` metadata on `PageField` for diagnostics
+- Service-field filtering (search, CSRF-like names, hidden controls) without CMS-specific selectors
+- Visibility checks (`display:none`, `hidden`, zero-layout); custom select/combobox marked unsupported
+- Duplicate normalized labels → `ambiguousLabel` + ambiguous page mapping
+- SPA/page stale detection (URL change + live field resolve ratio); explicit rescan UX, no auto-rescan
+- `scanGeneration` counter; FillPlan identity guards before execute (document/profile/scan/URL)
+- Fill result breakdown (filled / already equal / skipped / failed); copy-value fallback for unsupported destinations
+- React `PanelErrorBoundary`; compact diagnostics section with privacy-safe copy export
+- HARSLE regression tests (`harsleRegressionCompare`, tightened `harsleAcceptance`)
+
+### Safety
+
+- Scan and Fill remain explicit user actions; no auto-submit, no auto-scan on navigation
+- Document workspace stays page-independent
+
 ## [0.8.0] — 2026-08-27
 
 ### Added

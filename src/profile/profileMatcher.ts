@@ -56,12 +56,22 @@ function matchSingleProperty(
     }
   }
 
+  const exactLabelMatches = indexes.byNormalizedLabel.get(normalizePropertyLabel(property.name)) ?? [];
+  if (exactLabelMatches.length > 1) {
+    return buildRow(property, 'exact-label', null, null, false, true);
+  }
+
   const exactLabelField = findUniqueExactLabelMatch(property.name, indexes.byNormalizedLabel);
   if (exactLabelField) {
     return buildRow(property, 'exact-label', exactLabelField, buildFieldSignature(exactLabelField), false, false);
   }
 
   for (const alias of property.aliases) {
+    const aliasMatches = indexes.byNormalizedLabel.get(normalizePropertyLabel(alias)) ?? [];
+    if (aliasMatches.length > 1) {
+      return buildRow(property, 'exact-alias', null, null, false, true);
+    }
+
     const aliasField = findUniqueExactLabelMatch(alias, indexes.byNormalizedLabel);
     if (aliasField) {
       return buildRow(property, 'exact-alias', aliasField, buildFieldSignature(aliasField), false, false);

@@ -8,8 +8,8 @@
 
 ## Текущий статус
 
-**Версия:** v0.8.0 (OCR & Complex Documents)  
-**Milestone:** local OCR fallback for scanned/hybrid PDF + layout improvements.
+**Версия:** v0.9.0 (Compatibility & UX Hardening)  
+**Milestone:** real-world form compatibility, stale-state protection, diagnostics — prep for v1.0.
 
 ### Что уже работает
 
@@ -291,6 +291,43 @@ Load unpacked: папка **`dist/`**
 - Tests: canonicalization, matcher safety, review decisions, HARSLE matching (+27)
 - Bundle: `content.js` ~1506 KB (+~27 KB vs v0.3.1)
 
+### 2026-08-27 — v0.9.0 Compatibility & UX Hardening
+
+- **HARSLE 29→28:** regression from multi-column split on page 14; lost `Linear Guide`, `Ball Screw`, `Reducer`; false positives `● HIWIN`/`● ROUIST`; fixed `shouldPreventColumnSplit()` — back to **29** characteristics
+- FormScanner: label priority, `labelSource`, service-field filter, visibility, duplicate-label ambiguity, `scanGeneration`
+- SPA stale detection (URL + live resolve &lt;50%); explicit rescan — **no auto-rescan** (popstate/hashchange + 4s interval only sets stale flag)
+- FillPlan identity (document session, profileId, scanGeneration, URL) validated before execute
+- Fill UX: result breakdown, copy-value fallback, page-stale warning
+- `PanelErrorBoundary`, `DiagnosticSection` (compact export, no full PDF text)
+- Tests: **165** total (+11); HARSLE regression compare + acceptance tightened
+- Bundle: content.js ~1575 KB; total dist ~38.2 MB (all 4 Tesseract core WASM variants kept — runtime selection not guaranteed safe to trim)
+- **Manual acceptance pending:** Chrome/Opera OCR smoke, real CMS card fill, HARSLE + full 1182 profile eyeball review
+
+#### Browser manual checklist (smoke)
+
+| Check | Chrome | Opera |
+|-------|--------|-------|
+| Install unpacked | pending | pending |
+| PDF on any page | pending | pending |
+| OCR worker | pending | pending |
+| Session navigation restore | pending | pending |
+| Scan + Fill + Undo | pending | pending |
+| No auto-submit | pending | pending |
+
+#### HARSLE + Mosklad subset (automated)
+
+- 29 characteristics extracted
+- Matching subset: HIGH **7**, REVIEW **4**, REJECT **18** (see `harsleMatchingAcceptance.test.ts`)
+- HIGH list: Bending Angle→PARAM20, Max Bending Speed→PARAM50, Motor Power→PARAM10, Dimension L/W/H→PARAM31-33, Weight→PARAM14
+
+#### Security audit (lightweight)
+
+- No `eval` / `new Function` in src
+- `innerHTML` only in tests
+- `chrome.tabs.sendMessage` in background for panel toggle only
+- No fetch/XHR/WebSocket to external URLs in extension code
+- React renders document/profile text as plain text (no dangerouslySetInnerHTML)
+
 ### 2026-08-27 — v0.8.0 OCR & Complex Documents
 
 - Page-level text quality (`good` / `weak` / `empty`) + PDF diagnostics UI
@@ -300,7 +337,7 @@ Load unpacked: папка **`dist/`**
 - PDF layout: geometry-aware spacing, conservative multi-column split
 - DOCX tables: colspan, repeated header rows
 - DocumentSession schema v4 (`pdfDiagnostics` summary)
-- Tests: 154 total; HARSLE native path unchanged (28 characteristics)
+- Tests: 154 total; HARSLE native path **29 characteristics** (28 was v0.8 regression, fixed in v0.9)
 - Bundle: `content.js` ~1571 KB; OCR assets ~34 MB in extension package (lazy-loaded)
 
 ### 2026-08-27 — v0.3.1 Document Workspace / Session

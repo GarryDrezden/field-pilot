@@ -165,17 +165,24 @@ FillPlan только из `getFillReadyMatches()` — semantic matching не д
 
 ---
 
-## v0.9 — Compatibility & UX (CURRENT)
+## v0.9 — Compatibility & UX Hardening ✅
 
-- [ ] real-world CMS compatibility, SPA/framework forms
-- [ ] UX polish, error recovery, performance, browser compatibility
+- [x] HARSLE 29→28 regression fix + regression tests
+- [x] FormScanner label priority, `labelSource`, service-field filter, visibility, duplicate-label ambiguity
+- [x] SPA stale page detection (`scanGeneration`, live resolve); explicit rescan UX
+- [x] FillPlan identity validation before execute; improved fill result UX
+- [x] Copy-value fallback; PanelErrorBoundary; diagnostics export
+- [x] Browser compatibility checklist in AGENTS.md (manual acceptance pending)
+
+**Результат:** daily-use hardening without new AI/matcher/OCR features; manual Chrome/Opera/OCR/CMS acceptance documented separately.
 
 ---
 
-## v1.0 — Stable Release
+## v1.0 — Stable Release (CURRENT)
 
 - [ ] regression tests, fixtures, privacy review
 - [ ] packaging, documentation, UX polish
+- [ ] manual acceptance gate (Chrome/Opera OCR, real CMS card fill)
 
 ---
 

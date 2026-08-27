@@ -9,6 +9,7 @@ export function PageFieldsSection() {
     scanError,
     hasScanned,
     scanPage,
+    pageStale,
     focusMappingPropertyId,
     clearMappingFocus,
   } = usePageContext();
@@ -27,9 +28,18 @@ export function PageFieldsSection() {
   return (
     <section className="fp-section">
       <h2>Текущая страница</h2>
+      <p className="fp-status fp-session-hint">
+        Используется только при заполнении формы на этой странице.
+      </p>
       <button type="button" className="fp-button" onClick={scanPage} disabled={isScanning}>
         {isScanning ? 'Сканирование…' : 'Сканировать страницу'}
       </button>
+
+      {pageStale && hasScanned && (
+        <p className="fp-status is-error">
+          Страница изменилась. Рекомендуется повторное сканирование.
+        </p>
+      )}
 
       {scanError && <p className="fp-status is-error">{scanError}</p>}
 
@@ -51,6 +61,8 @@ export function PageFieldsSection() {
                   <div className="fp-field-meta">
                     {field.elementType}
                     {field.inputType ? ` · ${field.inputType}` : ''}
+                    {field.labelSource ? ` · label:${field.labelSource}` : ''}
+                    {field.ambiguousLabel ? ' · ambiguous' : ''}
                     {field.name ? ` · name="${field.name}"` : ''}
                   </div>
                 </li>
@@ -83,7 +95,7 @@ export function PageFieldsSection() {
       )}
 
       {!hasScanned && !scanError && !isScanning && (
-        <p className="fp-empty">Поля не сканировались.</p>
+        <p className="fp-empty">Страница ещё не сканировалась.</p>
       )}
     </section>
   );
